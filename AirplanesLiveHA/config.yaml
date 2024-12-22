@@ -1,7 +1,7 @@
 name: "AirplanesliveHA"
-description: "airplanes.live addon for home assistant!"
-version: "1.1.0"
-slug: "hello_world"
+description: "An add-on to track live airplane data."
+version: "1.0.0"
+slug: "airplanes_live"
 init: false
 arch:
   - aarch64
@@ -13,14 +13,6 @@ startup: services
 ports:
   8000/tcp: 8000
 options:
-  beer: true
-  wine: true
-  liquor: false
-  name: "world"
-  year: 2017
+  update_interval: 10  # Update interval in seconds
 schema:
-  beer: bool
-  wine: bool
-  liquor: bool
-  name: str
-  year: int
+  update_interval: int

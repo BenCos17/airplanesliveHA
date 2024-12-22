@@ -1,17 +1,17 @@
-ARG BUILD_FROM
-FROM $BUILD_FROM
+# AirplanesLiveHA/Dockerfile
+FROM python:3.9-slim
 
-# Install requirements for add-on
-RUN \
-  apk add --no-cache \
-    python3
+# Set working directory
+WORKDIR /app
 
-# Python 3 HTTP Server serves the current working dir
-# So let's set it to our add-on persistent data directory.
-WORKDIR /data
+# Copy the necessary files
+COPY . .
 
-# Copy data for add-on
-COPY run.sh /
-RUN chmod a+x /run.sh
+# Install dependencies
+RUN pip install flask requests
 
-CMD [ "/run.sh" ]
+# Expose the port
+EXPOSE 8000
+
+# Command to run the application
+CMD ["python", "app.py"]

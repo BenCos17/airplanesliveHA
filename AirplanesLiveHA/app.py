@@ -10,10 +10,12 @@ api_url = "http://api.airplanes.live/v2/"  # Ensure this is correct
 
 @app.route('/api/airplanes', methods=['GET'])
 def get_airplanes():
+    print("Received request for /api/airplanes")  # Debugging output
     try:
         response = requests.get(f"{api_url}/mil")  # Example endpoint for military aircraft
         response.raise_for_status()  # Raise an error for bad responses
         data = response.json()
+        print(data)  # Log the data received
         return jsonify(data)
     except requests.exceptions.RequestException as e:
         app.logger.error(f"Error fetching data from API: {e}")
@@ -37,3 +39,4 @@ def get_airplane(hex):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
+

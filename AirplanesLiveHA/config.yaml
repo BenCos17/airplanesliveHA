@@ -16,8 +16,8 @@ options:
   update_interval: 10  # Update interval in seconds
   mqtt_broker: "mqtt://192.168.1.100"  # Replace with your host's IP address
   mqtt_topic: "airplanes/live"  # Base topic for publishing data
-  mqtt_username: ""  # MQTT username
-  mqtt_password: ""  # MQTT password
+  mqtt_username: "mqtt"  # MQTT username
+  mqtt_password: "mqttpassword"  # MQTT password
 schema:
   update_interval: int
   mqtt_broker: str

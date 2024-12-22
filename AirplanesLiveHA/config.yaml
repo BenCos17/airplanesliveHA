@@ -14,7 +14,8 @@ ports:
   8000/tcp: 8000
 options:
   update_interval: 10  # Update interval in seconds
-  api_url: ""          # API URL for fetching airplane data
+  api_url: "http://api.airplanes.live/v2/"  # API URL for fetching airplane data
 schema:
   update_interval: int
   api_url: str         # Schema for API URL
+  webui: str           # Schema for web UI URL

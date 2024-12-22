@@ -23,12 +23,21 @@
         fetch('/api/airplanes')
             .then(response => response.json())
             .then(data => {
-                data.forEach(airplane => {
-                    L.marker([airplane.latitude, airplane.longitude]).addTo(map)
-                        .bindPopup(`Flight: ${airplane.flight_number}`);
+                data.ac.forEach(airplane => {
+                    const marker = L.marker([airplane.lastPosition.lat, airplane.lastPosition.lon]).addTo(map)
+                        .bindPopup(`Flight: ${airplane.flight} <br> <a href="#" onclick="fetchAirplane('${airplane.hex}')">More Info</a>`);
                 });
             })
             .catch(error => console.error('Error fetching airplane data:', error));
+
+        function fetchAirplane(hex) {
+            fetch(`/api/airplane/${hex}`)
+                .then(response => response.json())
+                .then(data => {
+                    alert(JSON.stringify(data, null, 2)); // Display airplane data in an alert
+                })
+                .catch(error => console.error('Error fetching airplane details:', error));
+        }
     </script>
 </body>
 </html>

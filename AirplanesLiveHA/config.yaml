@@ -17,5 +17,6 @@ options:
   api_url: "http://api.airplanes.live/v2/"  # API URL for fetching airplane data
 schema:
   update_interval: int
-#  api_url: str         # Schema for API URL
+  api_url: str         # Schema for API URL
   webui: str           # Schema for web UI URL
+webui: "http://localhost:8000"  # Set to localhost for local access

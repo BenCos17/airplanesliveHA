@@ -1,7 +1,7 @@
-name: "AirplanesliveHA"
-description: "An add-on to track live airplane data."
-version: "1.2.3"
-slug: "airplanes_live"
+name: "Airplanes Live API Add-on"
+description: "An add-on to track live airplane data and expose it as a Home Assistant entity via MQTT."
+version: "1.2.5"
+slug: "airplanes_live_api"
 init: false
 arch:
   - aarch64
@@ -14,8 +14,9 @@ ports:
   8000/tcp: 8000
 options:
   update_interval: 10  # Update interval in seconds
-  api_url: "http://api.airplanes.live/v2/"  # API URL for fetching airplane data
+  mqtt_broker: "mqtt://localhost"  # MQTT broker URL
+  mqtt_topic: "airplanes/live"  # Base topic for publishing data
 schema:
   update_interval: int
-  api_url: str         # Schema for API URL
-  webui: str           # Schema for web UI URL
+  mqtt_broker: str
+  mqtt_topic: str

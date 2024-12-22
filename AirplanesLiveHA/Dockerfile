@@ -8,10 +8,10 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies
-RUN pip install flask requests
+RUN pip install requests paho-mqtt
 
 # Expose the port
 EXPOSE 8000
 
 # Command to run the application
-CMD ["python", "app.py"]
+CMD ["python", "run.py"]

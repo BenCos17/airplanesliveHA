@@ -1,6 +1,6 @@
 name: "Airplanes Live API Add-on"
 description: "An add-on to track live airplane data and expose it as a Home Assistant entity via MQTT."
-version: "1.3.1"
+version: "1.3.2"
 slug: "airplanes_live_api"
 init: false
 arch:
@@ -14,10 +14,10 @@ ports:
   8000/tcp: 8000
 options:
   update_interval: 10  # Update interval in seconds
-  mqtt_broker: "mqtt://192.168.1.100"  # Replace with your host's IP address
+  mqtt_broker: "mqtt://localhost:1883"  # Default MQTT broker
   mqtt_topic: "airplanes/live"  # Base topic for publishing data
   mqtt_username: "mqtt"  # MQTT username
-  mqtt_password: "mqttpassword"  # MQTT password
+  mqtt_password: "password"  # MQTT password
 schema:
   update_interval: int
   mqtt_broker: str

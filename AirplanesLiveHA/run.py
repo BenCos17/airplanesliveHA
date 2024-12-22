@@ -26,21 +26,26 @@ def fetch_data():
             response.raise_for_status()
             data = response.json()
 
-            # Example: Extracting specific fields
+            # Process and publish data for the map
             for airplane in data.get('recentReceiverIds', []):
-                hex_id = airplane.get('hex')  # Replace with the actual key for hex ID
+                hex_id = airplane.get('hex')
                 flight = airplane.get('flight', 'Unknown Flight')
-                state = airplane.get('alt_hgt', 'Unknown Altitude')  # Example state
+                state = airplane.get('alt_hgt', 'Unknown Altitude')
+
+                # Assuming the API provides latitude and longitude
+                latitude = airplane.get('lat', None)
+                longitude = airplane.get('lon', None)
 
                 attributes = {
                     "flight": flight,
                     "altitude": airplane.get('altitude', 'N/A'),
                     "heading": airplane.get('nav_heading', 'N/A'),
                     "airline": airplane.get('airline', 'Unknown'),
-                    # Add more attributes as needed
+                    "latitude": latitude,
+                    "longitude": longitude,
                 }
 
-                # Publish data to MQTT
+                # Publish data to MQTT for the map
                 mqtt_client.publish(f"{MQTT_TOPIC}/{hex_id}", json.dumps({
                     "state": state,
                     "attributes": attributes

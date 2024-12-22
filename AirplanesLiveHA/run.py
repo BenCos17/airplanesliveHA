@@ -9,9 +9,15 @@ API_URL = "http://localhost:8000/api/airplanes"  # Local API
 UPDATE_INTERVAL = int(os.getenv("UPDATE_INTERVAL", 10))
 MQTT_BROKER = os.getenv("MQTT_BROKER", "mqtt://localhost")
 MQTT_TOPIC = os.getenv("MQTT_TOPIC", "airplanes/live")
+MQTT_USERNAME = os.getenv("MQTT_USERNAME", "")
+MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", "")
 
 # MQTT Client Setup
 mqtt_client = mqtt.Client()
+
+# Set username and password if provided
+if MQTT_USERNAME and MQTT_PASSWORD:
+    mqtt_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
 
 def on_connect(client, userdata, flags, rc):
     print(f"Connected to MQTT Broker with result code: {rc}")

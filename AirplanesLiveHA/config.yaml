@@ -1,6 +1,6 @@
 name: "AirplanesliveHA"
 description: "An add-on to track live airplane data."
-version: "1.2.2"
+version: "1.2.3"
 slug: "airplanes_live"
 init: false
 arch:

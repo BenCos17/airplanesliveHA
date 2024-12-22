@@ -20,37 +20,25 @@
             maxZoom: 19,
         }).addTo(map);
 
-        // Define a custom icon
-        const airplaneIcon = L.icon({
-            iconUrl: 'static/icons/airplane-icon.png', // Path to your icon image
-            iconSize: [32, 32], // Size of the icon
-            iconAnchor: [16, 32], // Point of the icon which will correspond to marker's location
-            popupAnchor: [0, -32] // Point from which the popup should open relative to the iconAnchor
-        });
-
         fetch('/api/airplanes')
             .then(response => response.json())
             .then(data => {
                 console.log(data);  // Log the data to the console
                 if (data.ac) {
                     data.ac.forEach(airplane => {
-                        const marker = L.marker([airplane.lastPosition.lat, airplane.lastPosition.lon]).addTo(map)
-                            .bindPopup(`Flight: ${airplane.flight} <br> <a href="#" onclick="fetchAirplane('${airplane.hex}')">More Info</a>`);
+                        // Check if lastPosition is defined
+                        if (airplane.lastPosition && airplane.lastPosition.lat && airplane.lastPosition.lon) {
+                            const marker = L.marker([airplane.lastPosition.lat, airplane.lastPosition.lon]).addTo(map)
+                                .bindPopup(`Flight: ${airplane.flight} <br> <a href="#" onclick="fetchAirplane('${airplane.hex}')">More Info</a>`);
+                        } else {
+                            console.error('Invalid position data for airplane:', airplane);
+                        }
                     });
                 } else {
                     console.error('No aircraft data found:', data);
                 }
             })
             .catch(error => console.error('Error fetching airplane data:', error));
-
-        function fetchAirplane(hex) {
-            fetch(`/api/airplane/${hex}`)
-                .then(response => response.json())
-                .then(data => {
-                    alert(JSON.stringify(data, null, 2)); // Display airplane data in an alert
-                })
-                .catch(error => console.error('Error fetching airplane details:', error));
-        }
     </script>
 </body>
 </html>

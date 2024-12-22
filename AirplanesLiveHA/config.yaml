@@ -22,5 +22,5 @@ schema:
   update_interval: int
   mqtt_broker: str
   mqtt_topic: str
-  mqtt_username: str
-  mqtt_password: str
+  mqtt_username: str  # Expose username
+  mqtt_password: str  # Expose password

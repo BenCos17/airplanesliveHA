@@ -5,12 +5,13 @@ import os
 
 app = Flask(__name__)
 
-API_URL = "http://api.airplanes.live/v2/"  # Set your API URL here
+# Load the configuration from the environment variables
+api_url = os.getenv('API_URL', 'http://api.airplanes.live/v2/')  # Default to the API URL if not set
 
 @app.route('/api/airplanes', methods=['GET'])
 def get_airplanes():
     # Fetch airplane data from the Airplanes.live API
-    response = requests.get(f"{API_URL}/mil")  # Example endpoint for military aircraft
+    response = requests.get(f"{api_url}/mil")  # Example endpoint for military aircraft
     if response.status_code == 200:
         data = response.json()
         return jsonify(data)
@@ -23,7 +24,7 @@ def index():
 
 @app.route('/api/airplane/<hex>', methods=['GET'])
 def get_airplane(hex):
-    response = requests.get(f"{API_URL}/hex/{hex}")
+    response = requests.get(f"{api_url}/hex/{hex}")
     if response.status_code == 200:
         data = response.json()
         return jsonify(data)

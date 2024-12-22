@@ -1,7 +1,7 @@
 name: "AirplanesliveHA"
 description: "An add-on to track live airplane data."
 version: "1.2.0"
-slug: "airplanesliveHA"
+slug: "airplanes_live"
 init: false
 arch:
   - aarch64

@@ -5,18 +5,22 @@ import os
 
 app = Flask(__name__)
 
-# Load the configuration from the environment variables
-api_url = os.getenv('API_URL', 'http://api.airplanes.live/v2/')  # Default to the API URL if not set
+# Set your actual API URL here
+api_url = "http://api.airplanes.live/v2/"  # Ensure this is correct
 
 @app.route('/api/airplanes', methods=['GET'])
 def get_airplanes():
-    # Fetch airplane data from the Airplanes.live API
-    response = requests.get(f"{api_url}/mil")  # Example endpoint for military aircraft
-    if response.status_code == 200:
+    try:
+        response = requests.get(f"{api_url}/mil")  # Example endpoint for military aircraft
+        response.raise_for_status()  # Raise an error for bad responses
         data = response.json()
         return jsonify(data)
-    else:
-        return jsonify({"error": "Failed to fetch data"}), response.status_code
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error fetching data from API: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+    except Exception as e:
+        app.logger.error(f"An unexpected error occurred: {e}")
+        return jsonify({"error": "Internal Server Error"}), 500
 
 @app.route('/', methods=['GET'])
 def index():

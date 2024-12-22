@@ -1,6 +1,6 @@
 name: "AirplanesliveHA"
 description: "An add-on to track live airplane data."
-version: "1.0.1"
+version: "1.0.2"
 slug: "airplanes_live"
 init: false
 arch:
@@ -14,5 +14,7 @@ ports:
   8000/tcp: 8000
 options:
   update_interval: 10  # Update interval in seconds
+  api_url: ""          # API URL for fetching airplane data
 schema:
   update_interval: int
+  api_url: str         # Schema for API URL

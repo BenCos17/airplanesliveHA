@@ -21,6 +21,13 @@ MQTT_TOPIC = config.get('options', {}).get('mqtt_topic', 'airplanes/live')
 MQTT_USERNAME = config.get('options', {}).get('mqtt_username', '')
 MQTT_PASSWORD = config.get('options', {}).get('mqtt_password', '')
 
+# Print the configuration settings to the console
+print("MQTT Configuration:")
+print(f"  Broker: {MQTT_BROKER}")
+print(f"  Topic: {MQTT_TOPIC}")
+print(f"  Username: {MQTT_USERNAME}")
+print(f"  Update Interval: {UPDATE_INTERVAL} seconds")
+
 # MQTT Client Setup
 mqtt_client = mqtt.Client()
 

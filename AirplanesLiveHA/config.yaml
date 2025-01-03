@@ -14,13 +14,14 @@ ports:
   8000/tcp: 8000
 options:
   update_interval: 10  # Update interval in seconds
-  mqtt_broker: "mqtt://localhost:1883"  # Default MQTT broker
+  mqtt_broker: "mqtt://localhost"  # Your MQTT broker URL
   mqtt_topic: "airplanes/live"  # Base topic for publishing data
-  mqtt_username: "mqtt"  # MQTT username
-  mqtt_password: "password"  # MQTT password
+  mqtt_username: "your_username"  # MQTT username
+  mqtt_password: "your_password"  # MQTT password
 schema:
   update_interval: int
   mqtt_broker: str
   mqtt_topic: str
   mqtt_username: str  # Expose username
   mqtt_password: str  # Expose password
+

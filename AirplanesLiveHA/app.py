@@ -2,8 +2,18 @@
 from flask import Flask, jsonify, render_template
 import requests
 import os
+import yaml  # Import yaml to read the config file
 
 app = Flask(__name__)
+
+# Load configuration from @config.yaml
+def load_config():
+    config_path = '/config/@config.yaml'  # Path to the config file
+    with open(config_path, 'r') as file:
+        return yaml.safe_load(file)
+
+# Fetch configuration
+config = load_config()
 
 # Set your actual API URL here
 api_url = "http://api.airplanes.live/v2/"  # Ensure this is correct

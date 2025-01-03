@@ -38,11 +38,6 @@ if MQTT_USERNAME and MQTT_PASSWORD:
 # Debugging: Print the MQTT broker URL
 print(f"Connecting to MQTT Broker at: {MQTT_BROKER}")
 
-def on_connect(client, userdata, flags, rc):
-    print(f"Connected to MQTT Broker with result code: {rc}")
-
-mqtt_client.on_connect = on_connect
-
 # Connect to the MQTT broker
 try:
     mqtt_client.connect(MQTT_BROKER)

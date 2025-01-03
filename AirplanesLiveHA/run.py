@@ -28,6 +28,9 @@ mqtt_client = mqtt.Client()
 if MQTT_USERNAME and MQTT_PASSWORD:
     mqtt_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
 
+# Debugging: Print the MQTT broker URL
+print(f"Connecting to MQTT Broker at: {MQTT_BROKER}")
+
 def on_connect(client, userdata, flags, rc):
     print(f"Connected to MQTT Broker with result code: {rc}")
 

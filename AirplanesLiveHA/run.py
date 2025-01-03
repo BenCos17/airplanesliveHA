@@ -3,24 +3,23 @@ import time
 import json
 import os
 import paho.mqtt.client as mqtt
+import yaml  # Import yaml to read the config file
 
-# Configuration
-API_URLS = [
-    "https://api.airplanes.live/v2/mil",  # Military aircraft
-    "https://api.airplanes.live/v2/ladd",  # LADD aircraft
-    "https://api.airplanes.live/v2/pia",   # PIA aircraft
-    "https://api.airplanes.live/v2/hex/[hex]",  # Replace [hex] with actual hex ID
-    "https://api.airplanes.live/v2/callsign/[callsign]",  # Replace [callsign] with actual callsign
-    "https://api.airplanes.live/v2/reg/[reg]",  # Replace [reg] with actual registration
-    "https://api.airplanes.live/v2/type/[type]",  # Replace [type] with actual ICAO type code
-    "https://api.airplanes.live/v2/squawk/[squawk]",  # Replace [squawk] with actual squawk code
-    "https://api.airplanes.live/v2/point/[lat]/[lon]/[radius]"  # Replace [lat], [lon], and [radius] with actual values
-]  # List of endpoints to poll
-UPDATE_INTERVAL = int(os.getenv("UPDATE_INTERVAL", 10))
-MQTT_BROKER = os.getenv("MQTT_BROKER", "mqtt://localhost")
-MQTT_TOPIC = os.getenv("MQTT_TOPIC", "airplanes/live")
-MQTT_USERNAME = os.getenv("MQTT_USERNAME", "")
-MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", "")
+# Load configuration from @config.yaml
+def load_config():
+    config_path = '/config/@config.yaml'  # Path to the config file
+    with open(config_path, 'r') as file:
+        return yaml.safe_load(file)
+
+# Fetch configuration
+config = load_config()
+
+# Extract configuration values
+UPDATE_INTERVAL = config.get('options', {}).get('update_interval', 10)
+MQTT_BROKER = config.get('options', {}).get('mqtt_broker', 'mqtt://localhost')
+MQTT_TOPIC = config.get('options', {}).get('mqtt_topic', 'airplanes/live')
+MQTT_USERNAME = config.get('options', {}).get('mqtt_username', '')
+MQTT_PASSWORD = config.get('options', {}).get('mqtt_password', '')
 
 # MQTT Client Setup
 mqtt_client = mqtt.Client()
@@ -33,7 +32,25 @@ def on_connect(client, userdata, flags, rc):
     print(f"Connected to MQTT Broker with result code: {rc}")
 
 mqtt_client.on_connect = on_connect
-mqtt_client.connect(MQTT_BROKER)
+
+# Connect to the MQTT broker
+try:
+    mqtt_client.connect(MQTT_BROKER)
+except Exception as e:
+    print(f"Failed to connect to MQTT Broker: {e}")
+
+# List of API URLs to poll
+API_URLS = [
+    "https://api.airplanes.live/v2/mil",  # Military aircraft
+    "https://api.airplanes.live/v2/ladd",  # LADD aircraft
+    "https://api.airplanes.live/v2/pia",   # PIA aircraft
+    "https://api.airplanes.live/v2/hex/[hex]",  # Replace [hex] with actual hex ID
+    "https://api.airplanes.live/v2/callsign/[callsign]",  # Replace [callsign] with actual callsign
+    "https://api.airplanes.live/v2/reg/[reg]",  # Replace [reg] with actual registration
+    "https://api.airplanes.live/v2/type/[type]",  # Replace [type] with actual ICAO type code
+    "https://api.airplanes.live/v2/squawk/[squawk]",  # Replace [squawk] with actual squawk code
+    "https://api.airplanes.live/v2/point/[lat]/[lon]/[radius]"  # Replace [lat], [lon], and [radius] with actual values
+]
 
 def fetch_data():
     while True:
@@ -71,6 +88,7 @@ def fetch_data():
 
             except requests.exceptions.RequestException as e:
                 print(f"Error fetching data from API {api_url}: {e}")
+
         mqtt_client.loop_start()  # Start the MQTT loop
         time.sleep(UPDATE_INTERVAL)
 

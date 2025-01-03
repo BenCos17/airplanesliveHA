@@ -18,10 +18,23 @@ config = load_config()
 # Set your actual API URL here
 api_url = "http://api.airplanes.live/v2/"  # Ensure this is correct
 
+# Configuration for API URLs
+API_URLS = [
+    f"{api_url}/mil",  # Military aircraft
+    f"{api_url}/ladd",  # LADD aircraft
+    f"{api_url}/pia",   # PIA aircraft
+    f"{api_url}/hex/[hex]",  # Replace [hex] with actual hex ID
+    f"{api_url}/callsign/[callsign]",  # Replace [callsign] with actual callsign
+    f"{api_url}/reg/[reg]",  # Replace [reg] with actual registration
+    f"{api_url}/type/[type]",  # Replace [type] with actual ICAO type code
+    f"{api_url}/squawk/[squawk]",  # Replace [squawk] with actual squawk code
+    f"{api_url}/point/[lat]/[lon]/[radius]"  # Replace [lat], [lon], and [radius] with actual values
+]
+
 @app.route('/api/airplanes', methods=['GET'])
 def get_airplanes():
     try:
-        response = requests.get(f"{api_url}/mil")  # Example endpoint for military aircraft
+        response = requests.get(API_URLS[0])  # Example endpoint for military aircraft
         response.raise_for_status()  # Raise an error for bad responses
         data = response.json()
         return jsonify(data)

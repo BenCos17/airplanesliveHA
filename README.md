@@ -1,4 +1,22 @@
-# Airplanes.live addon 
+# Airplanes Live API Add-on
+
+This Home Assistant add-on fetches live airplane tracking data from the [Airplanes.Live API](https://airplanes.live/api-guide/) and publishes it to an MQTT broker.
+
+## Configuration
+
+Modify the `config.yaml` file with your settings:
+
+- `api_url`: Base URL for the Airplanes.Live API.
+- `latitude`, `longitude`, `radius`: The area to monitor.
+- `mqtt_broker`, `mqtt_topic`, `mqtt_username`, `mqtt_password`: MQTT settings.
+
+## Installation
+
+1. Clone the repository.
+2. Modify `config.yaml` with your settings.
+3. Build and run the add-on in Home Assistant.
+
+
 
 
 Add-on documentation: <https://developers.home-assistant.io/docs/add-ons>

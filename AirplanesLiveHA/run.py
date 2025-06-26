@@ -27,8 +27,15 @@ def fetch_airplane_data():
         resp = requests.get(url, timeout=10)
         resp.raise_for_status()
         data = resp.json()
-        log(f"Fetched {len(data) if isinstance(data, list) else 0} aircraft")
-        return data
+        
+        # Extract aircraft array from response
+        if isinstance(data, dict) and 'ac' in data:
+            aircraft_list = data['ac']
+            log(f"Fetched {len(aircraft_list) if isinstance(aircraft_list, list) else 0} aircraft")
+            return aircraft_list
+        else:
+            log(f"Unexpected API response format: {type(data)}")
+            return None
     except Exception as e:
         log(f"Error fetching airplane data: {e}")
         return None

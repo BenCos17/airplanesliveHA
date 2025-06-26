@@ -3,6 +3,7 @@ from flask import Flask, jsonify, render_template
 import requests
 import os
 import yaml  # Import yaml to read the config file
+import paho.mqtt.client as mqtt
 
 app = Flask(__name__)
 
@@ -60,4 +61,9 @@ def get_airplane(hex):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
+
+client = mqtt.Client(protocol=mqtt.MQTTv5)
+client.username_pw_set("your_mqtt_user", "your_mqtt_password")
+client.connect("core-mosquitto", 1883, 60)
+print("Connected!")
 

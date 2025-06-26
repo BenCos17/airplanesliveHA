@@ -122,9 +122,14 @@ def publish_airplanes(client, data):
             log("Aircraft data missing hex ID")
 
 def on_connect(client, userdata, flags, reasonCode, properties):
-    log(f"Connected to MQTT broker with reason code: {reasonCode}")
+    if reasonCode == 0:
+        log(f"Connected to MQTT broker successfully")
+    else:
+        log(f"Connected to MQTT broker with reason code: {reasonCode}")
+        if reasonCode == 5:
+            log("MQTT authentication failed - check username/password")
 
-def on_disconnect(client, userdata, rc):
+def on_disconnect(client, userdata, rc, properties=None):
     log(f"Disconnected from MQTT broker with reason code: {rc}")
 
 def main():
@@ -133,28 +138,54 @@ def main():
     log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}")
     
     client = mqtt.Client(protocol=mqtt.MQTTv5)
+    
+    # Configure MQTT authentication if credentials are provided
     if MQTT_USERNAME and MQTT_PASSWORD:
         client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
         log("MQTT authentication configured")
+    else:
+        log("No MQTT credentials provided - attempting anonymous connection")
     
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
 
     # Connect to MQTT broker with retry logic
-    while True:
+    max_retries = 5
+    retry_count = 0
+    
+    while retry_count < max_retries:
         try:
-            log(f"Connecting to MQTT broker {MQTT_BROKER}:{MQTT_PORT}")
+            log(f"Connecting to MQTT broker {MQTT_BROKER}:{MQTT_PORT} (attempt {retry_count + 1}/{max_retries})")
             client.connect(MQTT_BROKER, MQTT_PORT, 60)
             client.loop_start()
-            break
+            
+            # Wait a moment to see if connection is successful
+            time.sleep(2)
+            if client.is_connected():
+                log("MQTT connection established successfully")
+                break
+            else:
+                log("MQTT connection failed - retrying...")
+                client.loop_stop()
+                retry_count += 1
+                time.sleep(5)
+                
         except Exception as e:
             log(f"MQTT connection failed: {e}. Retrying in 5 seconds...")
+            retry_count += 1
             time.sleep(5)
+    
+    if not client.is_connected():
+        log("Failed to connect to MQTT broker after maximum retries. Continuing without MQTT...")
+        client = None
 
     try:
         while True:
             data = fetch_airplane_data()
-            publish_airplanes(client, data)
+            if client and client.is_connected():
+                publish_airplanes(client, data)
+            else:
+                log("MQTT not connected - skipping publish")
             log(f"Sleeping for {UPDATE_INTERVAL} seconds")
             time.sleep(UPDATE_INTERVAL)
     except KeyboardInterrupt:
@@ -162,8 +193,9 @@ def main():
     except Exception as e:
         log(f"Unexpected error: {e}")
     finally:
-        client.loop_stop()
-        client.disconnect()
+        if client:
+            client.loop_stop()
+            client.disconnect()
         log("Cleanup completed")
 
 if __name__ == "__main__":

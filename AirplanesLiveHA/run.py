@@ -4,6 +4,8 @@ import time
 import requests
 import paho.mqtt.client as mqtt
 
+print("RUNNING UPDATED RUN.PY")
+
 # Load config from environment variables
 API_URL = os.getenv("API_URL", "https://airplanes.live/api/point")
 LATITUDE = os.getenv("LATITUDE", "53.2707")
@@ -16,7 +18,7 @@ MQTT_USERNAME = os.getenv("MQTT_USERNAME", "")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", "")
 
 # Initialize MQTT client
-client = mqtt.Client()
+client = mqtt.Client(protocol=mqtt.MQTTv5)
 if MQTT_USERNAME and MQTT_PASSWORD:
     client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
 

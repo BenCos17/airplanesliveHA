@@ -34,7 +34,7 @@ API_URLS = [
 @app.route('/api/airplanes', methods=['GET'])
 def get_airplanes():
     try:
-        response = requests.get(API_URLS[0])  # Example endpoint for military aircraft
+        response = requests.get(API_URLS[0])  # Example endpoint for military aircraft   
         response.raise_for_status()  # Raise an error for bad responses
         data = response.json()
         return jsonify(data)

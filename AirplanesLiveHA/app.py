@@ -65,6 +65,11 @@ if __name__ == '__main__':
 client = mqtt.Client(protocol=mqtt.MQTTv5)
 mqtt_user = os.getenv("MQTT_USERNAME", "")
 mqtt_pass = os.getenv("MQTT_PASSWORD", "")
+
+# Debug prints
+print("MQTT_USERNAME:", repr(mqtt_user))
+print("MQTT_PASSWORD:", repr(mqtt_pass))
+
 if mqtt_user and mqtt_pass:
     client.username_pw_set(mqtt_user, mqtt_pass)
 client.connect("core-mosquitto", 1883, 60)

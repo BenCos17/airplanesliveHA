@@ -2,41 +2,21 @@
 from flask import Flask, jsonify, render_template
 import requests
 import os
-import yaml  # Import yaml to read the config file
-import paho.mqtt.client as mqtt
 
 app = Flask(__name__)
 
-# Load configuration from @config.yaml
-def load_config():
-    config_path = '/config/@config.yaml'  # Path to the config file
-    with open(config_path, 'r') as file:
-        return yaml.safe_load(file)
-
-# Fetch configuration
-config = load_config()
-
-# Set your actual API URL here
-api_url = "http://api.airplanes.live/v2/"  # Ensure this is correct
-
-# Configuration for API URLs
-API_URLS = [
-    f"{api_url}/mil",  # Military aircraft
-    f"{api_url}/ladd",  # LADD aircraft
-    f"{api_url}/pia",   # PIA aircraft
-    f"{api_url}/hex/[hex]",  # Replace [hex] with actual hex ID
-    f"{api_url}/callsign/[callsign]",  # Replace [callsign] with actual callsign
-    f"{api_url}/reg/[reg]",  # Replace [reg] with actual registration
-    f"{api_url}/type/[type]",  # Replace [type] with actual ICAO type code
-    f"{api_url}/squawk/[squawk]",  # Replace [squawk] with actual squawk code
-    f"{api_url}/point/[lat]/[lon]/[radius]"  # Replace [lat], [lon], and [radius] with actual values
-]
+# Load configuration from environment variables (Home Assistant add-on standard)
+API_URL = os.getenv("API_URL", "https://api.airplanes.live/v2/point")
+LATITUDE = os.getenv("LATITUDE", "53.2707")
+LONGITUDE = os.getenv("LONGITUDE", "-9.0568")
+RADIUS = os.getenv("RADIUS", "50")
 
 @app.route('/api/airplanes', methods=['GET'])
 def get_airplanes():
     try:
-        response = requests.get(API_URLS[0])  # Example endpoint for military aircraft   
-        response.raise_for_status()  # Raise an error for bad responses
+        url = f"{API_URL}/{LATITUDE}/{LONGITUDE}/{RADIUS}"
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
         data = response.json()
         return jsonify(data)
     except requests.exceptions.RequestException as e:
@@ -52,28 +32,22 @@ def index():
 
 @app.route('/api/airplane/<hex>', methods=['GET'])
 def get_airplane(hex):
-    response = requests.get(f"{api_url}/hex/{hex}")
-    if response.status_code == 200:
+    try:
+        # Use the hex endpoint from the API
+        url = f"https://api.airplanes.live/v2/hex/{hex}"
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
         data = response.json()
         return jsonify(data)
-    else:
-        return jsonify({"error": "Failed to fetch data"}), response.status_code
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error fetching airplane data: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+    except Exception as e:
+        app.logger.error(f"An unexpected error occurred: {e}")
+        return jsonify({"error": "Internal Server Error"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
-
-client = mqtt.Client(protocol=mqtt.MQTTv5)
-mqtt_user = os.getenv("MQTT_USERNAME", "")
-mqtt_pass = os.getenv("MQTT_PASSWORD", "")
-
-# Debug prints
-print("MQTT_USERNAME:", repr(mqtt_user))
-print("MQTT_PASSWORD:", repr(mqtt_pass))
-
-if mqtt_user and mqtt_pass:
-    client.username_pw_set(mqtt_user, mqtt_pass)
-client.connect("core-mosquitto", 1883, 60)
-print("Connected test")
 
 
 

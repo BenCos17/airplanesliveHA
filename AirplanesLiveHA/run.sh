@@ -1,5 +1,6 @@
 #!/usr/bin/with-contenv bashio
 
-echo "hello!"
+echo "Starting Airplanes Live Home Assistant Add-on"
 
-python3 -m http.server 8000
+# Start the main application that handles MQTT and API calls
+python3 /app/run.py

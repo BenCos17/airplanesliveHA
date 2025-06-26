@@ -1,6 +1,7 @@
 options:
   update_interval: 10
-mqtt_broker: addon_core_mosquitto
+  mqtt_broker: addon_core_mosquitto
+  mqtt_port: 1883
   mqtt_topic: airplanes/live
   mqtt_username: ""
   mqtt_password: ""

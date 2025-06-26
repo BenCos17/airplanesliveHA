@@ -19,7 +19,7 @@ options:
   mqtt_topic: airplanes/live
   mqtt_username: ""
   mqtt_password: ""
-  api_url: "https://airplanes.live/api/point"
+  api_url: "https://api.airplanes.live/v2/point"
   latitude: 53.2707
   longitude: -9.0568
   radius: 50

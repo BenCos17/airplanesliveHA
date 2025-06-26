@@ -54,7 +54,7 @@ def publish_airplanes(client, data):
         client.publish(topic, json.dumps(aircraft), retain=True)
 
 def on_connect(client, userdata, flags, reasonCode, properties):
-    log("Connected to MQTT broker.")
+    log("Connected to MQTT broker2")
 
 def main():
     log("Starting Airplanes Live Home Assistant Add-on")

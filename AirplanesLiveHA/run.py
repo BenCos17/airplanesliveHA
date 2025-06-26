@@ -34,8 +34,25 @@ def fetch_airplane_data():
         return None
 
 def publish_to_mqtt(data):
-    """Publishes airplane data to the configured MQTT topic."""
+    """Publishes airplane data to the configured MQTT topic and Home Assistant discovery."""
     if data:
         for aircraft in data:
+            hex_id = aircraft.get('hex', 'unknown')
+            # Home Assistant Discovery topic
+            discovery_topic = f"homeassistant/sensor/airplane_{hex_id}/config"
+            discovery_payload = {
+                "name": f"Airplane {hex_id}",
+                "state_topic": f"{MQTT_TOPIC}/{hex_id}",
+                "json_attributes_topic": f"{MQTT_TOPIC}/{hex_id}",
+                "unique_id": f"airplane_{hex_id}",
+                "device": {
+                    "identifiers": [f"airplane_{hex_id}"],
+                    "name": f"Airplane {hex_id}",
+                    "manufacturer": "airplanes.live"
+                }
+            }
+            client.publish(discovery_topic, json.dumps(discovery_payload), retain=True)
+            # Publish aircraft data
             message = json.dumps(aircraft)
-            topic = f"{MQTT_TOPIC}/{aircraft.get
+            topic = f"{MQTT_TOPIC}/{hex_id}"
+            client.publish(topic, message, retain=True)

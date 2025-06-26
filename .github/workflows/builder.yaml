@@ -22,10 +22,25 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
 
       - name: Get changed files
         id: changed_files
-        uses: jitterbit/get-changed-files@v1
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # For pull requests, compare with the base branch
+            git diff --name-only origin/${{ github.base_ref }}...HEAD > changed_files.txt
+          else
+            # For pushes, compare with the previous commit
+            git diff --name-only HEAD~1...HEAD > changed_files.txt
+          fi
+          
+          # Read all changed files into a variable
+          changed_files=$(cat changed_files.txt)
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$changed_files" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Find add-on directories
         id: addons
@@ -36,9 +51,9 @@ jobs:
         run: |
           declare -a changed_addons
           for addon in ${{ steps.addons.outputs.addons }}; do
-            if [[ "${{ steps.changed_files.outputs.all }}" =~ $addon ]]; then
+            if [[ "${{ steps.changed_files.outputs.changed_files }}" =~ $addon ]]; then
               for file in ${{ env.MONITORED_FILES }}; do
-                  if [[ "${{ steps.changed_files.outputs.all }}" =~ $addon/$file ]]; then
+                  if [[ "${{ steps.changed_files.outputs.changed_files }}" =~ $addon/$file ]]; then
                     if [[ ! "${changed_addons[@]}" =~ $addon ]]; then
                       changed_addons+=("\"${addon}\",");
                     fi

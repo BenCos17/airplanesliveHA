@@ -5,6 +5,9 @@ import requests
 import paho.mqtt.client as mqtt
 from datetime import datetime
 
+print(f"MQTT_USERNAME env: {os.getenv('MQTT_USERNAME')}")
+print(f"MQTT_PASSWORD env: {os.getenv('MQTT_PASSWORD')}")
+
 def log(msg):
     print(f"[AirplanesLive] {msg}", flush=True)
 

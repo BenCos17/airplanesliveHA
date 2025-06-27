@@ -20,8 +20,8 @@ UPDATE_INTERVAL = int(os.getenv("UPDATE_INTERVAL", 10))
 MQTT_BROKER = os.getenv("MQTT_BROKER", "core-mosquitto")
 MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
 MQTT_TOPIC = os.getenv("MQTT_TOPIC", "airplanes/live")
-MQTT_USERNAME = os.getenv("MQTT_USERNAME", "")
-MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", "")
+MQTT_USERNAME = "mqtt"
+MQTT_PASSWORD = "mqtt1234"
 
 def fetch_airplane_data():
     url = f"{API_URL}/{LATITUDE}/{LONGITUDE}/{RADIUS}"

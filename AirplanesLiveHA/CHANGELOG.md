@@ -22,3 +22,9 @@
  - Added port descriptions for better user experience
  - Created English translation file with proper labels and descriptions for all configuration options
  - Improved add-on description to be more comprehensive and user-friendly
+
+ Version 1.3.23 Changes:
+ - Fixed web UI not working by starting Flask server alongside MQTT service
+ - Added health check endpoint (/health) for reliable watchdog monitoring
+ - Updated watchdog URL to use health endpoint instead of API endpoint
+ - Both Flask web server and MQTT service now run simultaneously

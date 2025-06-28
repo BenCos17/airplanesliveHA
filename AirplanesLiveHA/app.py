@@ -44,6 +44,11 @@ def get_airplanes():
 def index():
     return render_template('index.html')
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for watchdog monitoring"""
+    return jsonify({"status": "healthy", "service": "airplanes-live-api"}), 200
+
 @app.route('/api/airplane/<hex>', methods=['GET'])
 def get_airplane(hex):
     try:

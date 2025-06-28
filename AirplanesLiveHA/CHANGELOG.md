@@ -67,3 +67,8 @@
  - Updated Dockerfile to use ghcr.io/hassio-addons/base:14.0.0
  - Fixed Alpine Linux compatibility with proper package installation
  - Ensured service files are properly copied and have correct permissions
+
+ Version 1.3.31 Changes:
+ - Fixed package conflict with musl-dev on i386 architecture
+ - Removed problematic musl-dev package from Dockerfile
+ - Simplified package installation to work across all architectures

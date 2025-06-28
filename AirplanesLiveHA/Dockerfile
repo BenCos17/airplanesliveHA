@@ -3,7 +3,6 @@ FROM ghcr.io/hassio-addons/base:14.0.0
 # Install system dependencies
 RUN apk add --no-cache \
     gcc \
-    musl-dev \
     python3-dev \
     py3-pip
 

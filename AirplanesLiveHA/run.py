@@ -83,7 +83,6 @@ def publish_discovery(client, hex_id, aircraft_data):
         "state_topic": f"{MQTT_TOPIC}/{hex_id}/state",
         "json_attributes_topic": f"{MQTT_TOPIC}/{hex_id}/attributes",
         "unique_id": f"airplane_{hex_id}",
-        "device_class": "sensor",
         "unit_of_measurement": "ft",
         "value_template": "{{ value_json.altitude }}",
         "device": {

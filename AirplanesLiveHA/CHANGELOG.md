@@ -34,3 +34,10 @@
  - Removed default MQTT credentials to prevent authentication conflicts
  - Users must now configure MQTT username and password through the add-on options
  - Improved compatibility with Home Assistant's default Mosquitto add-on
+
+ Version 1.3.25 Changes:
+ - Minor improvements and documentation updates
+
+ Version 1.3.26 Changes:
+ - Fixed Home Assistant MQTT discovery by removing invalid 'device_class: sensor' from discovery payloads
+ - Entities now appear correctly in Home Assistant

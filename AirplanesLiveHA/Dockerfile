@@ -18,12 +18,11 @@ COPY run.py .
 COPY app.py .
 COPY templates/ ./templates/
 
-# Create non-root user
-RUN useradd -r -s /bin/false appuser && chown -R appuser:appuser /app
-USER appuser
+# Create non-root user but don't switch to it yet (Home Assistant will handle permissions)
+RUN useradd -r -s /bin/false appuser
 
 # Expose port for web interface
 EXPOSE 8000
 
-# Start the application
+# Start the application (Home Assistant will run as appropriate user)
 CMD ["python", "run.py"]

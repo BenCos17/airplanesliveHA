@@ -28,3 +28,9 @@
  - Added health check endpoint (/health) for reliable watchdog monitoring
  - Updated watchdog URL to use health endpoint instead of API endpoint
  - Both Flask web server and MQTT service now run simultaneously
+
+ Version 1.3.24 Changes:
+ - Fixed permission denied error when reading /data/options.json by removing USER directive from Dockerfile
+ - Removed default MQTT credentials to prevent authentication conflicts
+ - Users must now configure MQTT username and password through the add-on options
+ - Improved compatibility with Home Assistant's default Mosquitto add-on

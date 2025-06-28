@@ -72,3 +72,9 @@
  - Fixed package conflict with musl-dev on i386 architecture
  - Removed problematic musl-dev package from Dockerfile
  - Simplified package installation to work across all architectures
+
+ Version 1.3.32 Changes:
+ - Removed all leftover/example services (example, airplanes_live_web) from the add-on
+ - Cleaned up service directory to only include the main airplanes_live_api service
+ - No more permission errors from unused or example services
+ - Finalized cleanup for a production-ready, minimal, and error-free add-on

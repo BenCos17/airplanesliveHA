@@ -66,125 +66,129 @@ def fetch_airplane_data():
         log(f"Error fetching airplane data: {e}")
         return None
 
-def publish_discovery(client, hex_id, aircraft_data):
-    """Publish MQTT discovery for Home Assistant for each attribute."""
-    # Define the attributes you want to expose
-    attributes = [
+def publish_discovery(client):
+    """Publish MQTT discovery for Home Assistant - single device with multiple sensors."""
+    # Define the sensors we want to expose
+    sensors = [
         {
-            "name": "Altitude",
-            "key": "altitude",
+            "name": "Aircraft Count",
+            "key": "count",
+            "unit": None,
+            "device_class": None,
+            "value_template": "{{ value_json.count }}"
+        },
+        {
+            "name": "Closest Aircraft",
+            "key": "closest",
+            "unit": None,
+            "device_class": None,
+            "value_template": "{{ value_json.closest }}"
+        },
+        {
+            "name": "Highest Aircraft",
+            "key": "highest",
             "unit": "ft",
             "device_class": None,
-            "value_template": "{{ value_json.altitude }}"
+            "value_template": "{{ value_json.highest }}"
         },
         {
-            "name": "Speed",
-            "key": "speed",
+            "name": "Fastest Aircraft",
+            "key": "fastest",
             "unit": "kts",
             "device_class": "speed",
-            "value_template": "{{ value_json.speed }}"
+            "value_template": "{{ value_json.fastest }}"
         },
         {
-            "name": "Track",
-            "key": "track",
-            "unit": "°",
-            "device_class": None,
-            "value_template": "{{ value_json.track }}"
-        },
-        {
-            "name": "Flight",
-            "key": "flight",
+            "name": "Last Update",
+            "key": "last_update",
             "unit": None,
-            "device_class": None,
-            "value_template": "{{ value_json.flight }}"
-        },
-        {
-            "name": "Registration",
-            "key": "registration",
-            "unit": None,
-            "device_class": None,
-            "value_template": "{{ value_json.registration }}"
-        },
-        {
-            "name": "Type",
-            "key": "type",
-            "unit": None,
-            "device_class": None,
-            "value_template": "{{ value_json.type }}"
+            "device_class": "timestamp",
+            "value_template": "{{ value_json.last_update }}"
         }
     ]
 
-    for attr in attributes:
-        discovery_topic = f"homeassistant/sensor/airplane_{hex_id}_{attr['key']}/config"
+    for sensor in sensors:
+        discovery_topic = f"homeassistant/sensor/airplanes_live_{sensor['key']}/config"
         payload = {
-            "name": f"Airplane {hex_id} {attr['name']}",
-            "state_topic": f"{MQTT_TOPIC}/{hex_id}/state",
-            "unique_id": f"airplane_{hex_id}_{attr['key']}",
-            "value_template": attr["value_template"],
+            "name": f"Airplanes Live {sensor['name']}",
+            "state_topic": f"{MQTT_TOPIC}/summary",
+            "unique_id": f"airplanes_live_{sensor['key']}",
+            "value_template": sensor["value_template"],
             "device": {
-                "identifiers": [f"airplane_{hex_id}"],
-                "name": f"Airplane {hex_id}",
+                "identifiers": ["airplanes_live_device"],
+                "name": "Airplanes Live",
                 "manufacturer": "airplanes.live",
-                "model": aircraft_data.get('t', 'Unknown'),
+                "model": "Aircraft Tracker",
                 "sw_version": "1.0"
             }
         }
-        if attr["unit"]:
-            payload["unit_of_measurement"] = attr["unit"]
-        if attr["device_class"]:
-            payload["device_class"] = attr["device_class"]
+        if sensor["unit"]:
+            payload["unit_of_measurement"] = sensor["unit"]
+        if sensor["device_class"]:
+            payload["device_class"] = sensor["device_class"]
 
         try:
             client.publish(discovery_topic, json.dumps(payload), retain=True)
-            log(f"Published discovery for {hex_id} {attr['name']}")
+            log(f"Published discovery for {sensor['name']}")
         except Exception as e:
-            log(f"Error publishing discovery for {hex_id} {attr['name']}: {e}")
+            log(f"Error publishing discovery for {sensor['name']}: {e}")
 
-def publish_airplane_data(client, hex_id, aircraft_data):
-    """Publish airplane data to MQTT"""
+def publish_summary_data(client, aircraft_list):
+    """Publish summary data to MQTT"""
     try:
-        # Publish state
-        state_topic = f"{MQTT_TOPIC}/{hex_id}/state"
-        state_payload = {
-            "altitude": aircraft_data.get('alt_baro', 'Unknown'),
-            "flight": aircraft_data.get('flight', 'Unknown'),
-            "timestamp": datetime.now().isoformat()
-        }
-        client.publish(state_topic, json.dumps(state_payload), retain=True)
+        if not aircraft_list or not isinstance(aircraft_list, list):
+            # No aircraft data
+            summary_payload = {
+                "count": 0,
+                "closest": "None",
+                "highest": 0,
+                "fastest": 0,
+                "last_update": datetime.now().isoformat()
+            }
+        else:
+            # Process aircraft data
+            count = len(aircraft_list)
+            
+            # Find closest aircraft (lowest altitude, or first one if no altitude data)
+            closest = "None"
+            if aircraft_list:
+                closest_aircraft = min(aircraft_list, 
+                                     key=lambda x: x.get('alt_baro', float('inf')) if x.get('alt_baro') else float('inf'))
+                if closest_aircraft.get('alt_baro'):
+                    flight = closest_aircraft.get('flight', 'Unknown')
+                    alt = closest_aircraft.get('alt_baro')
+                    closest = f"{flight} ({alt}ft)"
+                else:
+                    closest = closest_aircraft.get('flight', 'Unknown')
+            
+            # Find highest aircraft
+            highest = 0
+            if aircraft_list:
+                highest_alt = max((ac.get('alt_baro', 0) for ac in aircraft_list if ac.get('alt_baro')), default=0)
+                highest = highest_alt
+            
+            # Find fastest aircraft
+            fastest = 0
+            if aircraft_list:
+                fastest_speed = max((ac.get('speed', 0) for ac in aircraft_list if ac.get('speed')), default=0)
+                fastest = fastest_speed
+            
+            summary_payload = {
+                "count": count,
+                "closest": closest,
+                "highest": highest,
+                "fastest": fastest,
+                "last_update": datetime.now().isoformat()
+            }
         
-        # Publish attributes
-        attr_topic = f"{MQTT_TOPIC}/{hex_id}/attributes"
-        attr_payload = {
-            "hex": hex_id,
-            "flight": aircraft_data.get('flight', 'Unknown'),
-            "altitude": aircraft_data.get('alt_baro', 'Unknown'),
-            "speed": aircraft_data.get('speed', 'Unknown'),
-            "track": aircraft_data.get('track', 'Unknown'),
-            "latitude": aircraft_data.get('lat', 0),
-            "longitude": aircraft_data.get('lon', 0),
-            "type": aircraft_data.get('t', 'Unknown'),
-            "registration": aircraft_data.get('r', 'Unknown'),
-            "squawk": aircraft_data.get('squawk', 'Unknown'),
-            "last_seen": datetime.now().isoformat()
-        }
-        client.publish(attr_topic, json.dumps(attr_payload), retain=True)
+        # Publish summary data
+        summary_topic = f"{MQTT_TOPIC}/summary"
+        client.publish(summary_topic, json.dumps(summary_payload), retain=True)
+        
+        log(f"Published summary: {count} aircraft, closest: {summary_payload['closest']}, highest: {highest}ft, fastest: {fastest}kts")
         
     except Exception as e:
-        log(f"Error publishing data for {hex_id}: {e}")
-
-def publish_airplanes(client, data):
-    if not data or not isinstance(data, list):
-        log("No valid aircraft data received")
-        return
-    
-    log(f"Processing {len(data)} aircraft")
-    for aircraft in data:
-        hex_id = aircraft.get('hex')
-        if hex_id:
-            publish_discovery(client, hex_id, aircraft)
-            publish_airplane_data(client, hex_id, aircraft)
-        else:
-            log("Aircraft data missing hex ID")
+        log(f"Error publishing summary data: {e}")
 
 def on_connect(client, userdata, flags, reasonCode, properties):
     if reasonCode == 0:
@@ -245,10 +249,14 @@ def main():
         client = None
 
     try:
+        # Publish discovery once at startup
+        if client and client.is_connected():
+            publish_discovery(client)
+        
         while True:
             data = fetch_airplane_data()
             if client and client.is_connected():
-                publish_airplanes(client, data)
+                publish_summary_data(client, data)
             else:
                 log("MQTT not connected - skipping publish")
             log(f"Sleeping for {UPDATE_INTERVAL} seconds")

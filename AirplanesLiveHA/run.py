@@ -152,26 +152,56 @@ def publish_summary_data(client, aircraft_list):
             # Find closest aircraft (lowest altitude, or first one if no altitude data)
             closest = "None"
             if aircraft_list:
-                closest_aircraft = min(aircraft_list, 
-                                     key=lambda x: x.get('alt_baro', float('inf')) if x.get('alt_baro') else float('inf'))
-                if closest_aircraft.get('alt_baro'):
+                # Filter aircraft with valid altitude data and convert to numbers
+                valid_aircraft = []
+                for ac in aircraft_list:
+                    alt = ac.get('alt_baro')
+                    if alt is not None:
+                        try:
+                            alt_num = float(alt)
+                            valid_aircraft.append((ac, alt_num))
+                        except (ValueError, TypeError):
+                            continue
+                
+                if valid_aircraft:
+                    # Find aircraft with lowest altitude
+                    closest_aircraft, closest_alt = min(valid_aircraft, key=lambda x: x[1])
                     flight = closest_aircraft.get('flight', 'Unknown')
-                    alt = closest_aircraft.get('alt_baro')
-                    closest = f"{flight} ({alt}ft)"
+                    closest = f"{flight} ({closest_alt}ft)"
                 else:
+                    # No valid altitude data, use first aircraft
+                    closest_aircraft = aircraft_list[0]
                     closest = closest_aircraft.get('flight', 'Unknown')
             
             # Find highest aircraft
             highest = 0
             if aircraft_list:
-                highest_alt = max((ac.get('alt_baro', 0) for ac in aircraft_list if ac.get('alt_baro')), default=0)
-                highest = highest_alt
+                altitudes = []
+                for ac in aircraft_list:
+                    alt = ac.get('alt_baro')
+                    if alt is not None:
+                        try:
+                            alt_num = float(alt)
+                            altitudes.append(alt_num)
+                        except (ValueError, TypeError):
+                            continue
+                if altitudes:
+                    highest = max(altitudes)
             
             # Find fastest aircraft
             fastest = 0
             if aircraft_list:
-                fastest_speed = max((ac.get('speed', 0) for ac in aircraft_list if ac.get('speed')), default=0)
-                fastest = fastest_speed
+                speeds = []
+                for ac in aircraft_list:
+                    speed = ac.get('speed')
+                    if speed is not None:
+                        try:
+                            speed_num = float(speed)
+                            speeds.append(speed_num)
+                        except (ValueError, TypeError):
+                            continue
+                if speeds:
+                    fastest = max(speeds)
             
             summary_payload = {
                 "count": count,

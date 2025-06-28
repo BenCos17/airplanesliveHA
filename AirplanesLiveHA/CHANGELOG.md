@@ -83,3 +83,9 @@
  - MAJOR CHANGE: Switched from individual aircraft devices to single "Airplanes Live" device
  - Single device contains 5 summary sensors: Aircraft Count, Closest Aircraft, Highest Aircraft, Fastest Aircraft, Last Update
  - No cleanup needed - aircraft are able to come and go without creating permanent devices
+
+ Version 1.3.34 Changes:
+ - Fixed type comparison error when processing aircraft altitude and speed data
+ - Added proper type conversion and error handling for string/number comparisons
+ - Improved robustness when API returns mixed data types
+ - Fixed "'<' not supported between instances of 'str' and 'int'" error

@@ -2,14 +2,28 @@
 from flask import Flask, jsonify, render_template
 import requests
 import os
+import json
 
 app = Flask(__name__)
 
-# Load configuration from environment variables (Home Assistant add-on standard)
-API_URL = os.getenv("API_URL", "https://api.airplanes.live/v2/point")
-LATITUDE = os.getenv("LATITUDE", "53.2707")
-LONGITUDE = os.getenv("LONGITUDE", "-9.0568")
-RADIUS = os.getenv("RADIUS", "50")
+def load_config():
+    """Load configuration from Home Assistant options.json file"""
+    config_path = "/data/options.json"
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        return config
+    except (FileNotFoundError, json.JSONDecodeError, Exception):
+        return {}
+
+# Load configuration
+config = load_config()
+
+# Load configuration from options.json with fallback defaults
+API_URL = config.get("api_url", "https://api.airplanes.live/v2/point")
+LATITUDE = config.get("latitude", "53.2707")
+LONGITUDE = config.get("longitude", "-9.0568")
+RADIUS = config.get("radius", 50)
 
 @app.route('/api/airplanes', methods=['GET'])
 def get_airplanes():

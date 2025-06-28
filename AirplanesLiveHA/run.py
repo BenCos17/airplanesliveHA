@@ -5,23 +5,44 @@ import requests
 import paho.mqtt.client as mqtt
 from datetime import datetime
 
-print(f"MQTT_USERNAME env: {os.getenv('MQTT_USERNAME')}")
-print(f"MQTT_PASSWORD env: {os.getenv('MQTT_PASSWORD')}")
-
 def log(msg):
     print(f"[AirplanesLive] {msg}", flush=True)
 
-# Load config from environment variables
-API_URL = os.getenv("API_URL", "https://api.airplanes.live/v2/point")
-LATITUDE = os.getenv("LATITUDE", "53.2707")
-LONGITUDE = os.getenv("LONGITUDE", "-9.0568")
-RADIUS = os.getenv("RADIUS", "50")
-UPDATE_INTERVAL = int(os.getenv("UPDATE_INTERVAL", 10))
-MQTT_BROKER = os.getenv("MQTT_BROKER", "core-mosquitto")
-MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
-MQTT_TOPIC = os.getenv("MQTT_TOPIC", "airplanes/live")
-MQTT_USERNAME = "mqtt"
-MQTT_PASSWORD = "mqtt1234"
+def load_config():
+    """Load configuration from Home Assistant options.json file"""
+    config_path = "/data/options.json"
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        log(f"Loaded configuration from {config_path}")
+        return config
+    except FileNotFoundError:
+        log(f"Configuration file {config_path} not found, using defaults")
+        return {}
+    except json.JSONDecodeError as e:
+        log(f"Error parsing configuration file: {e}, using defaults")
+        return {}
+    except Exception as e:
+        log(f"Error loading configuration: {e}, using defaults")
+        return {}
+
+# Load configuration
+config = load_config()
+
+# Load config from options.json with fallback defaults
+API_URL = config.get("api_url", "https://api.airplanes.live/v2/point")
+LATITUDE = config.get("latitude", "53.2707")
+LONGITUDE = config.get("longitude", "-9.0568")
+RADIUS = config.get("radius", 50)
+UPDATE_INTERVAL = config.get("update_interval", 10)
+MQTT_BROKER = config.get("mqtt_broker", "core-mosquitto")
+MQTT_PORT = config.get("mqtt_port", 1883)
+MQTT_TOPIC = config.get("mqtt_topic", "airplanes/live")
+MQTT_USERNAME = config.get("mqtt_username", "")
+MQTT_PASSWORD = config.get("mqtt_password", "")
+
+log(f"Configuration loaded: API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}")
+log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}")
 
 def fetch_airplane_data():
     url = f"{API_URL}/{LATITUDE}/{LONGITUDE}/{RADIUS}"

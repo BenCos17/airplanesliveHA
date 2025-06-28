@@ -71,7 +71,7 @@ Once the add-on is running, it will automatically create sensor entities in Home
 Access the web interface at `http://your-home-assistant:8000` to see an interactive map showing all detected aircraft in real-time. The web interface features:
 
 - **Interactive map** with aircraft markers
-- **Real-time updates** via MQTT
+- **Real-time updates** via API polling
 - **Aircraft details** in popup windows
 - **Live statistics** showing aircraft count and last update time
 - **Automatic cleanup** of stale aircraft data
@@ -101,13 +101,23 @@ The add-on publishes to the following MQTT topics:
 3. **API errors**: Check the add-on logs for detailed error messages
 4. **Web interface not loading**: Ensure port 8000 is accessible and not blocked
 
+### Web Interface Connection Issues
+
+If you're unable to connect to the web interface:
+
+1. **Check if the add-on is running**: Verify the add-on status in Home Assistant
+2. **Check the logs**: Look for any error messages in the add-on logs
+3. **Verify port access**: Ensure port 8000 is not blocked by firewall
+4. **Try the health endpoint**: Test `http://your-home-assistant:8000/health`
+5. **Check network connectivity**: Ensure you can reach the Home Assistant instance
+
 ### Logs
 
 Check the add-on logs in Home Assistant for detailed information about:
 - API requests and responses
 - MQTT connection status
 - Aircraft data processing
-- Web interface access soon lol
+- Web interface access
 
 ## Support
 

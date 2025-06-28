@@ -24,5 +24,5 @@ RUN useradd -r -s /bin/false appuser
 # Expose port for web interface
 EXPOSE 8000
 
-# Start the application (Home Assistant will run as appropriate user)
-CMD ["python", "run.py"]
+# The s6-overlay system will handle service startup
+CMD ["/init"]

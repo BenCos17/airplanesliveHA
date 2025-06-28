@@ -67,7 +67,6 @@
     <div id="map"></div>
     
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script>
         // Initialize map centered on configured coordinates
         const map = L.map('map').setView([53.2707, -9.0568], 8);
@@ -81,55 +80,63 @@
         const aircraftMarkers = new Map();
         let aircraftCount = 0;
         
-        // Connect to MQTT broker
-        const client = mqtt.connect('ws://localhost:8000');
+        // Function to fetch aircraft data from API
+        async function fetchAircraftData() {
+            try {
+                const response = await fetch('/api/airplanes');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data && data.ac && Array.isArray(data.ac)) {
+                    updateAircraftFromAPI(data.ac);
+                }
+            } catch (error) {
+                console.error('Error fetching aircraft data:', error);
+            }
+        }
         
-        client.on('connect', function () {
-            console.log('Connected to MQTT broker');
-            client.subscribe('airplanes/live/+/attributes', function (err) {
-                if (!err) {
-                    console.log('Subscribed to airplanes topic');
+        function updateAircraftFromAPI(aircraftList) {
+            // Clear existing markers
+            aircraftMarkers.forEach((marker) => {
+                map.removeLayer(marker);
+            });
+            aircraftMarkers.clear();
+            
+            // Add new markers
+            aircraftList.forEach(aircraft => {
+                if (aircraft.hex && aircraft.lat && aircraft.lon) {
+                    addAircraftMarker(aircraft);
                 }
             });
-        });
+            
+            // Update stats
+            aircraftCount = aircraftMarkers.size;
+            document.getElementById('aircraft-count').textContent = aircraftCount;
+            document.getElementById('last-update').textContent = new Date().toLocaleString();
+        }
         
-        client.on('message', function (topic, message) {
-            try {
-                const data = JSON.parse(message.toString());
-                const hexId = topic.split('/')[2]; // Extract hex ID from topic
-                
-                if (data.latitude && data.longitude) {
-                    updateAircraft(hexId, data);
-                }
-            } catch (e) {
-                console.error('Error parsing message:', e);
-            }
-        });
-        
-        function updateAircraft(hexId, data) {
-            const lat = parseFloat(data.latitude);
-            const lon = parseFloat(data.longitude);
+        function addAircraftMarker(aircraft) {
+            const lat = parseFloat(aircraft.lat);
+            const lon = parseFloat(aircraft.lon);
+            const hexId = aircraft.hex;
             
             if (isNaN(lat) || isNaN(lon)) {
                 return;
             }
             
-            // Remove existing marker if it exists
-            if (aircraftMarkers.has(hexId)) {
-                map.removeLayer(aircraftMarkers.get(hexId));
-            }
-            
             // Create popup content
             const popupContent = `
                 <div class="aircraft-popup">
-                    <h3>✈️ ${data.flight || 'Unknown Flight'}</h3>
+                    <h3>✈️ ${aircraft.flight || 'Unknown Flight'}</h3>
                     <p><strong>Hex ID:</strong> ${hexId}</p>
-                    <p><strong>Altitude:</strong> ${data.altitude || 'Unknown'} ft</p>
-                    <p><strong>Speed:</strong> ${data.speed || 'Unknown'} kts</p>
-                    <p><strong>Track:</strong> ${data.track || 'Unknown'}°</p>
-                    <p><strong>Type:</strong> ${data.type || 'Unknown'}</p>
-                    <p><strong>Registration:</strong> ${data.registration || 'Unknown'}</p>
-                    <p><strong>Last Seen:</strong> ${new Date(data.last_seen).toLocaleString()}</p>
+                    <p><strong>Altitude:</strong> ${aircraft.alt_baro || 'Unknown'} ft</p>
+                    <p><strong>Speed:</strong> ${aircraft.speed || 'Unknown'} kts</p>
+                    <p><strong>Track:</strong> ${aircraft.track || 'Unknown'}°</p>
+                    <p><strong>Type:</strong> ${aircraft.t || 'Unknown'}</p>
+                    <p><strong>Registration:</strong> ${aircraft.r || 'Unknown'}</p>
+                    <p><strong>Squawk:</strong> ${aircraft.squawk || 'Unknown'}</p>
                 </div>
             `;
             
@@ -145,25 +152,13 @@
             
             marker.bindPopup(popupContent);
             aircraftMarkers.set(hexId, marker);
-            
-            // Update stats
-            aircraftCount = aircraftMarkers.size;
-            document.getElementById('aircraft-count').textContent = aircraftCount;
-            document.getElementById('last-update').textContent = new Date().toLocaleString();
         }
         
-        // Clean up old markers periodically
-        setInterval(() => {
-            const now = Date.now();
-            aircraftMarkers.forEach((marker, hexId) => {
-                // Remove markers older than 5 minutes
-                if (now - marker.lastUpdate > 300000) {
-                    map.removeLayer(marker);
-                    aircraftMarkers.delete(hexId);
-                }
-            });
-            document.getElementById('aircraft-count').textContent = aircraftMarkers.size;
-        }, 60000); // Check every minute
+        // Initial fetch
+        fetchAircraftData();
+        
+        // Fetch data every 10 seconds
+        setInterval(fetchAircraftData, 10000);
     </script>
 </body>
 </html>

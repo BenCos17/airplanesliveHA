@@ -45,3 +45,12 @@
  Version 1.3.27 Changes:
  - Each aircraft attribute (altitude, speed, track, flight, registration, type) is now published as a separate Home Assistant entity per aircraft
  - All entities for a given aircraft are grouped under a single device in Home Assistant
+
+ Version 1.3.28 Changes:
+ - Fixed web interface connection issues by properly configuring s6 service management
+ - Updated web interface to use HTTP polling instead of MQTT WebSocket for better reliability
+ - Improved service startup to run both web interface and MQTT service simultaneously
+ - Enhanced web interface with better aircraft data display and real-time updates
+ - Added comprehensive troubleshooting documentation for web interface issues
+ - Updated README with accurate feature descriptions and usage instructions
+ - Added health endpoint testing and improved error handling

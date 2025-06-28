@@ -67,38 +67,78 @@ def fetch_airplane_data():
         return None
 
 def publish_discovery(client, hex_id, aircraft_data):
-    """Publish MQTT discovery for Home Assistant"""
-    discovery_topic = f"homeassistant/sensor/airplane_{hex_id}/config"
-    
-    # Extract useful information from aircraft data
-    flight = aircraft_data.get('flight', 'Unknown')
-    alt_baro = aircraft_data.get('alt_baro', 'Unknown')
-    speed = aircraft_data.get('speed', 'Unknown')
-    track = aircraft_data.get('track', 'Unknown')
-    lat = aircraft_data.get('lat', 0)
-    lon = aircraft_data.get('lon', 0)
-    
-    payload = {
-        "name": f"Airplane {hex_id}",
-        "state_topic": f"{MQTT_TOPIC}/{hex_id}/state",
-        "json_attributes_topic": f"{MQTT_TOPIC}/{hex_id}/attributes",
-        "unique_id": f"airplane_{hex_id}",
-        "unit_of_measurement": "ft",
-        "value_template": "{{ value_json.altitude }}",
-        "device": {
-            "identifiers": [f"airplane_{hex_id}"],
-            "name": f"Airplane {hex_id}",
-            "manufacturer": "airplanes.live",
-            "model": aircraft_data.get('t', 'Unknown'),
-            "sw_version": "1.0"
+    """Publish MQTT discovery for Home Assistant for each attribute."""
+    # Define the attributes you want to expose
+    attributes = [
+        {
+            "name": "Altitude",
+            "key": "altitude",
+            "unit": "ft",
+            "device_class": None,
+            "value_template": "{{ value_json.altitude }}"
+        },
+        {
+            "name": "Speed",
+            "key": "speed",
+            "unit": "kts",
+            "device_class": "speed",
+            "value_template": "{{ value_json.speed }}"
+        },
+        {
+            "name": "Track",
+            "key": "track",
+            "unit": "°",
+            "device_class": None,
+            "value_template": "{{ value_json.track }}"
+        },
+        {
+            "name": "Flight",
+            "key": "flight",
+            "unit": None,
+            "device_class": None,
+            "value_template": "{{ value_json.flight }}"
+        },
+        {
+            "name": "Registration",
+            "key": "registration",
+            "unit": None,
+            "device_class": None,
+            "value_template": "{{ value_json.registration }}"
+        },
+        {
+            "name": "Type",
+            "key": "type",
+            "unit": None,
+            "device_class": None,
+            "value_template": "{{ value_json.type }}"
         }
-    }
-    
-    try:
-        client.publish(discovery_topic, json.dumps(payload), retain=True)
-        log(f"Published discovery for {hex_id}")
-    except Exception as e:
-        log(f"Error publishing discovery for {hex_id}: {e}")
+    ]
+
+    for attr in attributes:
+        discovery_topic = f"homeassistant/sensor/airplane_{hex_id}_{attr['key']}/config"
+        payload = {
+            "name": f"Airplane {hex_id} {attr['name']}",
+            "state_topic": f"{MQTT_TOPIC}/{hex_id}/state",
+            "unique_id": f"airplane_{hex_id}_{attr['key']}",
+            "value_template": attr["value_template"],
+            "device": {
+                "identifiers": [f"airplane_{hex_id}"],
+                "name": f"Airplane {hex_id}",
+                "manufacturer": "airplanes.live",
+                "model": aircraft_data.get('t', 'Unknown'),
+                "sw_version": "1.0"
+            }
+        }
+        if attr["unit"]:
+            payload["unit_of_measurement"] = attr["unit"]
+        if attr["device_class"]:
+            payload["device_class"] = attr["device_class"]
+
+        try:
+            client.publish(discovery_topic, json.dumps(payload), retain=True)
+            log(f"Published discovery for {hex_id} {attr['name']}")
+        except Exception as e:
+            log(f"Error publishing discovery for {hex_id} {attr['name']}: {e}")
 
 def publish_airplane_data(client, hex_id, aircraft_data):
     """Publish airplane data to MQTT"""

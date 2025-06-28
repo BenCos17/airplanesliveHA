@@ -41,3 +41,7 @@
  Version 1.3.26 Changes:
  - Fixed Home Assistant MQTT discovery by removing invalid 'device_class: sensor' from discovery payloads
  - Entities now appear correctly in Home Assistant
+
+ Version 1.3.27 Changes:
+ - Each aircraft attribute (altitude, speed, track, flight, registration, type) is now published as a separate Home Assistant entity per aircraft
+ - All entities for a given aircraft are grouped under a single device in Home Assistant

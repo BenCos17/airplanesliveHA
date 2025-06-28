@@ -13,3 +13,12 @@
  - Removed hardcoded MQTT credentials - now configurable through add-on options
  - Updated both run.py and app.py to use centralized configuration loading
  - Improved user experience by making all settings configurable through Home Assistant UI
+
+ Version 1.3.22 Changes:
+ - Enhanced configuration following Home Assistant add-on best practices
+ - Added URL link to GitHub repository for support and documentation
+ - Added webui configuration for easy access to the web interface
+ - Added watchdog URL for health monitoring
+ - Added port descriptions for better user experience
+ - Created English translation file with proper labels and descriptions for all configuration options
+ - Improved add-on description to be more comprehensive and user-friendly

@@ -61,3 +61,9 @@
  - Simplified service startup to only run MQTT service
  - Updated documentation to reflect MQTT-only functionality
  - Reduced addon complexity and potential points of failure
+
+ Version 1.3.30 Changes:
+ - Fixed container startup issue by using proper Home Assistant base image with s6-overlay support
+ - Updated Dockerfile to use ghcr.io/hassio-addons/base:14.0.0
+ - Fixed Alpine Linux compatibility with proper package installation
+ - Ensured service files are properly copied and have correct permissions

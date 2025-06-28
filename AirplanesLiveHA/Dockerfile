@@ -1,9 +1,11 @@
-FROM python:3.9-slim
+FROM ghcr.io/hassio-addons/base:14.0.0
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache \
     gcc \
-    && rm -rf /var/lib/apt/lists/*
+    musl-dev \
+    python3-dev \
+    py3-pip
 
 WORKDIR /app
 
@@ -11,13 +13,14 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY run.py .
 
-# Create non-root user but don't switch to it yet (Home Assistant will handle permissions)
-RUN useradd -r -s /bin/false appuser
+# Copy s6 service files
+COPY rootfs/ /
 
-# The s6-overlay system will handle service startup
-CMD ["/init"]
+# Set permissions
+RUN chmod a+x /etc/services.d/airplanes_live_api/run
+RUN chmod a+x /etc/services.d/airplanes_live_api/finish

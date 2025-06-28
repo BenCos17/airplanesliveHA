@@ -29,6 +29,8 @@ def load_config():
 # Load configuration
 config = load_config()
 
+print(f"[AirplanesLive] Raw config loaded: {config}")
+
 # Load config from options.json with fallback defaults
 API_URL = config.get("api_url", "https://api.airplanes.live/v2/point")
 LATITUDE = config.get("latitude", "53.2707")

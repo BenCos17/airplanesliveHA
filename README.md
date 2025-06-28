@@ -1,13 +1,11 @@
 # Airplanes Live API Add-on
 
-This Home Assistant add-on fetches live airplane tracking data from the [Airplanes.Live API](https://airplanes.live/api-guide/) and publishes it to an MQTT broker, while also providing a web interface and REST API endpoints.
+This Home Assistant add-on fetches live airplane tracking data from the [Airplanes.Live API](https://airplanes.live/api-guide/) and publishes it to an MQTT broker for Home Assistant integration.
 
 ## Features
 
 - **Real-time aircraft tracking** using the airplanes.live API
 - **MQTT integration** for Home Assistant entity discovery
-- **Web interface** with interactive map showing aircraft positions
-- **REST API endpoints** for programmatic access
 - **Configurable parameters** for location, radius, and update intervals
 - **Automatic entity creation** in Home Assistant for each detected aircraft
 
@@ -34,15 +32,9 @@ The add-on can be configured through the Home Assistant add-on interface with th
 
 Once running, the add-on automatically creates sensor entities in Home Assistant for each detected aircraft, including altitude, speed, track, flight number, aircraft type, and registration.
 
-### Web Interface
+### MQTT Topics
 
-Access the interactive map at `http://your-home-assistant:8000` to see real-time aircraft positions with detailed information in popup windows.
-
-### API Endpoints
-
-- `GET /api/airplanes` - Get all aircraft in the configured area
-- `GET /api/airplane/<hex>` - Get specific aircraft by hex ID
-- `GET /health` - Health check endpoint
+The add-on publishes aircraft data to MQTT topics that Home Assistant can discover and integrate as entities.
 
 ## Support
 

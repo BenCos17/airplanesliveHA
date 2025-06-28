@@ -22,11 +22,8 @@ This add-on integrates with the [airplanes.live](https://airplanes.live) API to 
 
 - **Real-time aircraft tracking** using the airplanes.live API
 - **MQTT integration** for Home Assistant entity discovery
-- **Web interface** with interactive map showing aircraft positions
 - **Configurable parameters** for location, radius, and update intervals
 - **Automatic entity creation** in Home Assistant for each detected aircraft
-- **REST API endpoints** for programmatic access to aircraft data
-- **Health monitoring** with watchdog support
 
 ## Configuration
 
@@ -66,24 +63,6 @@ Once the add-on is running, it will automatically create sensor entities in Home
 - **Aircraft Type**: ICAO aircraft type code
 - **Registration**: Aircraft registration number
 
-### Web Interface
-
-Access the web interface at `http://your-home-assistant:8000` to see an interactive map showing all detected aircraft in real-time. The web interface features:
-
-- **Interactive map** with aircraft markers
-- **Real-time updates** via API polling
-- **Aircraft details** in popup windows
-- **Live statistics** showing aircraft count and last update time
-- **Automatic cleanup** of stale aircraft data
-
-### API Endpoints
-
-The add-on provides REST API endpoints:
-
-- `GET /api/airplanes` - Get all aircraft in the configured area
-- `GET /api/airplane/<hex>` - Get specific aircraft by hex ID
-- `GET /health` - Health check endpoint for monitoring
-
 ### MQTT Topics
 
 The add-on publishes to the following MQTT topics:
@@ -99,17 +78,6 @@ The add-on publishes to the following MQTT topics:
 1. **No aircraft showing**: Check your latitude/longitude coordinates and radius
 2. **MQTT connection issues**: Verify MQTT broker is running and credentials are correct
 3. **API errors**: Check the add-on logs for detailed error messages
-4. **Web interface not loading**: Ensure port 8000 is accessible and not blocked
-
-### Web Interface Connection Issues
-
-If you're unable to connect to the web interface:
-
-1. **Check if the add-on is running**: Verify the add-on status in Home Assistant
-2. **Check the logs**: Look for any error messages in the add-on logs
-3. **Verify port access**: Ensure port 8000 is not blocked by firewall
-4. **Try the health endpoint**: Test `http://your-home-assistant:8000/health`
-5. **Check network connectivity**: Ensure you can reach the Home Assistant instance
 
 ### Logs
 
@@ -117,7 +85,6 @@ Check the add-on logs in Home Assistant for detailed information about:
 - API requests and responses
 - MQTT connection status
 - Aircraft data processing
-- Web interface access
 
 ## Support
 

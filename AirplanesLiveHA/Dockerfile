@@ -15,14 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY run.py .
-COPY app.py .
-COPY templates/ ./templates/
 
 # Create non-root user but don't switch to it yet (Home Assistant will handle permissions)
 RUN useradd -r -s /bin/false appuser
-
-# Expose port for web interface
-EXPOSE 8000
 
 # The s6-overlay system will handle service startup
 CMD ["/init"]

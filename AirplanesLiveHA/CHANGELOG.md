@@ -54,3 +54,10 @@
  - Added comprehensive troubleshooting documentation for web interface issues
  - Updated README with accurate feature descriptions and usage instructions
  - Added health endpoint testing and improved error handling
+
+ Version 1.3.29 Changes:
+ - Removed web interface to simplify the addon and focus on MQTT functionality as it didn't work that well anyway 
+ - Removed Flask dependencies and web-related configuration
+ - Simplified service startup to only run MQTT service
+ - Updated documentation to reflect MQTT-only functionality
+ - Reduced addon complexity and potential points of failure

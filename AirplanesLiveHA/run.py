@@ -68,6 +68,8 @@ def fetch_airplane_data():
 
 def publish_discovery(client):
     """Publish MQTT discovery for Home Assistant - single device with multiple sensors."""
+    log("Starting MQTT discovery publishing...")
+    
     # Define the sensors we want to expose
     sensors = [
         {
@@ -128,10 +130,14 @@ def publish_discovery(client):
             payload["device_class"] = sensor["device_class"]
 
         try:
-            client.publish(discovery_topic, json.dumps(payload), retain=True)
+            payload_json = json.dumps(payload)
+            log(f"Publishing discovery to {discovery_topic}: {payload_json}")
+            client.publish(discovery_topic, payload_json, retain=True)
             log(f"Published discovery for {sensor['name']}")
         except Exception as e:
             log(f"Error publishing discovery for {sensor['name']}: {e}")
+    
+    log("Discovery publishing completed")
 
 def publish_summary_data(client, aircraft_list):
     """Publish summary data to MQTT"""
@@ -282,6 +288,19 @@ def main():
         # Publish discovery once at startup
         if client and client.is_connected():
             publish_discovery(client)
+            # Wait a moment for discovery to be processed
+            time.sleep(3)
+            # Publish initial data to help with discovery
+            log("Publishing initial data for discovery...")
+            initial_data = {
+                "count": 0,
+                "closest": "None",
+                "highest": 0,
+                "fastest": 0,
+                "last_update": datetime.now().isoformat()
+            }
+            client.publish(f"{MQTT_TOPIC}/summary", json.dumps(initial_data), retain=True)
+            log("Initial data published")
         
         while True:
             data = fetch_airplane_data()

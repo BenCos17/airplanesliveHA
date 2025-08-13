@@ -7,7 +7,6 @@ This Home Assistant add-on fetches live airplane tracking data from the [Airplan
 - **Real-time aircraft tracking** using the airplanes.live API
 - **MQTT integration** for Home Assistant entity discovery
 - **Configurable parameters** for location, radius, and update intervals
-- **Automatic entity creation** in Home Assistant for each detected aircraft
 
 ## Configuration
 

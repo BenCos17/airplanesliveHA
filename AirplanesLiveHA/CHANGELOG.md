@@ -149,3 +149,9 @@
  - **NEW**: Added API key configuration option for key based features
  - **IMPROVED**: Automatic radius conversion (km to nautical miles for REST API)
  - **ENHANCED**: Support for advanced filtering and more data with authenticated API 
+
+ Version 1.4.10 Changes:
+ - **FIXED**: Schema validation errors preventing addon from loading in Home Assistant
+ - **FIXED**: Invalid 'select' type and 'api_type_options' array in config.yaml
+ - **IMPROVED**: Changed api_type to use 'str' type for better Home Assistant compatibility
+ - **ENHANCED**: Updated example configuration with new API fields 

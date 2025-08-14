@@ -15,7 +15,9 @@ mqtt_username: ""                     # MQTT username (optional)
 mqtt_password: ""                     # MQTT password (optional)
 
 # API Configuration
-api_url: "https://api.airplanes.live/v2/point"  # API endpoint
+api_type: free                        # API type: "free" or "authenticated"
+api_url: "https://api.airplanes.live/v2/point"  # API endpoint (auto-configured)
+api_key: ""                           # Your airplanes.live API key (optional)
 
 # Tracking Mode
 # Options: "summary", "detailed", "both"
@@ -34,6 +36,10 @@ tracking_mode: summary
 
 # For comprehensive monitoring:
 # tracking_mode: both
+
+# For authenticated REST API access:
+# api_type: authenticated
+# api_key: "your-api-key-here"
 
 # Example for different locations:
 # New York City:

@@ -7,6 +7,7 @@ import paho.mqtt.client as mqtt
 import math
 from datetime import datetime
 from typing import Optional, List, Dict, Any
+import yaml
 
 # Configure logging
 logging.basicConfig(
@@ -46,6 +47,25 @@ def load_config():
     except Exception as e:
         log(f"Error loading configuration: {e}, using defaults", "error")
         return {}
+
+def get_addon_version():
+    """Get addon version from config.yaml file"""
+    config_path = "config.yaml"
+    try:
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+        version = config.get('version', 'unknown')
+        log(f"Loaded addon version: {version}")
+        return version
+    except FileNotFoundError:
+        log(f"Config file {config_path} not found, using default version", "warning")
+        return "1.4.24"
+    except yaml.YAMLError as e:
+        log(f"Error parsing config.yaml: {e}, using default version", "error")
+        return "1.4.24"
+    except Exception as e:
+        log(f"Error loading version: {e}, using default version", "error")
+        return "1.4.24"
 
 # Load configuration
 config = load_config()
@@ -280,7 +300,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
-                "sw_version": "1.4.23"
+                "sw_version": get_addon_version()
             }
         }
         if sensor["unit"]:
@@ -359,7 +379,7 @@ def publish_summary_data(client, aircraft_list):
                 "count": 0,
                 "closest_lowest": "None",
                 "closest_distance": "None",
-                "highest": 0,
+                "highest": "None",
                 "fastest_ground": 0,
                 "fastest_air": 0,
                 "aircraft_types": "None",
@@ -438,6 +458,7 @@ def publish_summary_data(client, aircraft_list):
             
             # Find highest aircraft
             highest = 0
+            highest_aircraft = None
             if aircraft_list:
                 altitudes = []
                 for ac in aircraft_list:
@@ -445,13 +466,14 @@ def publish_summary_data(client, aircraft_list):
                     if alt is not None:
                         try:
                             alt_num = float(alt)
-                            altitudes.append(alt_num)
+                            altitudes.append((ac, alt_num))
                         except (ValueError, TypeError):
                             continue
                 
                 log(f"Found {len(altitudes)} valid altitude values")
                 if altitudes:
-                    highest = max(altitudes)
+                    # Find aircraft with highest altitude
+                    highest_aircraft, highest = max(altitudes, key=lambda x: x[1])
                     log(f"Highest altitude: {highest}ft")
                 else:
                     log("No valid altitude data found")
@@ -532,7 +554,7 @@ def publish_summary_data(client, aircraft_list):
                 "count": count,
                 "closest_lowest": closest_lowest,
                 "closest_distance": closest_distance,
-                "highest": highest,
+                "highest": f"{highest_aircraft.get('flight', 'Unknown')} ({highest}ft)" if highest_aircraft else highest,
                 "fastest_ground": fastest_ground,
                 "fastest_air": fastest_air,
                 "aircraft_types": ", ".join(aircraft_types) if aircraft_types else "Unknown",
@@ -567,7 +589,7 @@ def on_disconnect(client, userdata, rc, properties=None):
     log(f"Disconnected from MQTT broker with reason code: {rc}", "warning")
 
 def main():
-    log("Starting Airplanes Live Home Assistant Add-on v1.4.23")
+    log(f"Starting Airplanes Live Home Assistant Add-on v{get_addon_version()}")
     
     # Validate configuration first
     if not validate_config():
@@ -631,7 +653,7 @@ def main():
                 "count": 0,
                 "closest_lowest": "None",
                 "closest_distance": "None",
-                "highest": 0,
+                "highest": "None",
                 "fastest_ground": 0,
                 "fastest_air": 0,
                 "aircraft_types": "None",

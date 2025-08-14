@@ -213,11 +213,7 @@
  - **ENHANCED**: Robust logging that won't crash on missing data fields
  - **TECHNICAL**: Added comprehensive debugging for API response structure and summary payload creation
 
- Version 1.4.23 Changes:
- - **FIXED**: Made api_key optional in configuration schema to prevent validation errors
- - **FIXED**: Configuration validation now properly handles missing api_key for unauthenticated API type
- - **IMPROVED**: Better schema validation for optional API key field
- - **ENHANCED**: Users can now save configuration without api_key when using feeder API
+
 
  Version 1.4.22 Changes:
  - **FIXED**: API response field mapping from 'ac' to 'aircraft' for REST API compatibility
@@ -225,3 +221,19 @@
  - **IMPROVED**: Automatic detection of API response format (aircraft vs ac)
  - **ENHANCED**: Support for both feeder API ('ac') and REST API ('aircraft') formats
  - **TECHNICAL**: Universal API response handling with automatic fallback
+ 
+ Version 1.4.23 Changes:
+ - **FIXED**: Made api_key optional in configuration schema to prevent validation errors
+ - **FIXED**: Configuration validation now properly handles missing api_key for unauthenticated API type
+ - **IMPROVED**: Better schema validation for optional API key field
+ - **ENHANCED**: Users can now save configuration without api_key when using feeder API
+
+ Version 1.4.24 Changes:
+ - **ENHANCED**: "Highest Aircraft" sensor now shows flight number and altitude (e.g., "ABC123 (35000ft)") instead of just altitude
+ - **IMPROVED**: Better aircraft identification in summary sensors for easier tracking
+ - **FIXED**: Consistent data format across all aircraft sensors (flight + data format)
+
+ Version 1.4.25 Changes:
+ - **IMPROVED**: Centralized version management - version number now read from config.yaml instead of hardcoded in multiple files
+ - **ENHANCED**: Added PyYAML dependency for YAML configuration parsing
+ - **TECHNICAL**: Single source of truth for version number across all addon components

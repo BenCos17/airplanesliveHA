@@ -204,3 +204,11 @@
  - **IMPROVED**: Replaced single "Closest Aircraft" sensor with two specialized sensors
  - **ENHANCED**: Now shows both altitude-based and geographic distance-based closest aircraft
  - **TECHNICAL**: Added Haversine formula for accurate distance calculations from your coordinates
+
+ Version 1.4.19 Changes:
+ - **FIXED**: Critical KeyError 'aircraft_types' crash when publishing summary data
+ - **FIXED**: Missing 'aircraft_types' and 'weather' fields in summary payload for empty aircraft lists
+ - **IMPROVED**: Enhanced API response logging with detailed structure information
+ - **IMPROVED**: Better error handling and debugging for API responses
+ - **ENHANCED**: Robust logging that won't crash on missing data fields
+ - **TECHNICAL**: Added comprehensive debugging for API response structure and summary payload creation

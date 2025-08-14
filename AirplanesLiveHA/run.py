@@ -142,14 +142,29 @@ def fetch_airplane_data() -> Optional[List[Dict[str, Any]]]:
         resp.raise_for_status()
         data = resp.json()
         
+        # Debug: Log response structure
+        log(f"API response type: {type(data)}")
+        if isinstance(data, dict):
+            log(f"API response keys: {list(data.keys())}")
+            if 'ac' in data:
+                log(f"API response 'ac' type: {type(data['ac'])}")
+        
         # Extract aircraft array from response
-        if isinstance(data, dict) and 'ac' in data:
-            aircraft_list = data['ac']
-            count = len(aircraft_list) if isinstance(aircraft_list, list) else 0
-            log(f"Fetched {count} aircraft using {API_TYPE} API")
-            return aircraft_list
+        if isinstance(data, dict):
+            if 'ac' in data:
+                aircraft_list = data['ac']
+                if isinstance(aircraft_list, list):
+                    count = len(aircraft_list)
+                    log(f"Fetched {count} aircraft using {API_TYPE} API")
+                    return aircraft_list
+                else:
+                    log(f"API response 'ac' field is not a list: {type(aircraft_list)}", "warning")
+                    return None
+            else:
+                log(f"API response missing 'ac' field. Available keys: {list(data.keys())}", "warning")
+                return None
         else:
-            log(f"Unexpected API response format: {type(data)}", "warning")
+            log(f"API response is not a dictionary: {type(data)}", "warning")
             return None
             
     except requests.exceptions.Timeout:
@@ -253,7 +268,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
-                "sw_version": "1.4.18"
+                "sw_version": "1.4.19"
             }
         }
         if sensor["unit"]:
@@ -335,6 +350,8 @@ def publish_summary_data(client, aircraft_list):
                 "highest": 0,
                 "fastest_ground": 0,
                 "fastest_air": 0,
+                "aircraft_types": "None",
+                "weather": "Unknown",
                 "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         else:
@@ -511,11 +528,14 @@ def publish_summary_data(client, aircraft_list):
                 "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         
+        # Debug: Log the summary payload structure
+        log(f"Summary payload keys: {list(summary_payload.keys())}")
+        
         # Publish summary data
         summary_topic = f"{MQTT_TOPIC}/summary"
         client.publish(summary_topic, json.dumps(summary_payload), retain=True)
         
-        log(f"Published summary: {summary_payload['count']} aircraft, lowest: {summary_payload['closest_lowest']}, closest: {summary_payload['closest_distance']}, highest: {summary_payload['highest']}ft, fastest ground: {summary_payload['fastest_ground']}kts, fastest air: {summary_payload['fastest_air']}kts, types: {summary_payload['aircraft_types']}, weather: {summary_payload['weather']}")
+        log(f"Published summary: {summary_payload.get('count', 'N/A')} aircraft, lowest: {summary_payload.get('closest_lowest', 'N/A')}, closest: {summary_payload.get('closest_distance', 'N/A')}, highest: {summary_payload.get('highest', 'N/A')}ft, fastest ground: {summary_payload.get('fastest_ground', 'N/A')}kts, fastest air: {summary_payload.get('fastest_air', 'N/A')}kts, types: {summary_payload.get('aircraft_types', 'N/A')}, weather: {summary_payload.get('weather', 'N/A')}")
         
     except Exception as e:
         log(f"Error publishing summary data: {e}", "error")

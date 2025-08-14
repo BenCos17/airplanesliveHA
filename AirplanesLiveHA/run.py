@@ -53,7 +53,6 @@ log(f"Raw config loaded: {config}")
 
 # Load config from options.json with fallback defaults
 API_TYPE = config.get("api_type", "free")
-API_URL = config.get("api_url", "https://api.airplanes.live/v2/point")
 API_KEY = config.get("api_key", "")
 LATITUDE = config.get("latitude", "53.2707")
 LONGITUDE = config.get("longitude", "-9.0568")
@@ -73,6 +72,7 @@ if API_TYPE == "authenticated":
     RADIUS_NMI = RADIUS * 0.539957
 else:
     # Free API uses kilometers
+    API_URL = "https://api.airplanes.live/v2/point"
     RADIUS_NMI = RADIUS
 
 log(f"Configuration loaded: API_TYPE={API_TYPE}, API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}km ({RADIUS_NMI:.1f}nm)")
@@ -149,6 +149,8 @@ def fetch_airplane_data() -> Optional[List[Dict[str, Any]]]:
         return None
     except requests.exceptions.HTTPError as e:
         log(f"API HTTP error: {e}", "error")
+        if "403" in str(e):
+            log("403 Forbidden - Check your API key or switch to non authenticated API", "error")
         return None
     except json.JSONDecodeError as e:
         log(f"Failed to parse API response: {e}", "error")
@@ -233,7 +235,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
-                "sw_version": "1.4.10"
+                "sw_version": "1.4.11"
             }
         }
         if sensor["unit"]:
@@ -454,7 +456,7 @@ def publish_summary_data(client, aircraft_list):
         summary_topic = f"{MQTT_TOPIC}/summary"
         client.publish(summary_topic, json.dumps(summary_payload), retain=True)
         
-        log(f"Published summary: {count} aircraft, closest: {summary_payload['closest']}, highest: {highest}ft, fastest ground: {fastest_ground}kts, fastest air: {fastest_air}kts, types: {summary_payload['aircraft_types']}, weather: {summary_payload['weather']}")
+        log(f"Published summary: {summary_payload['count']} aircraft, closest: {summary_payload['closest']}, highest: {summary_payload['highest']}ft, fastest ground: {summary_payload['fastest_ground']}kts, fastest air: {summary_payload['fastest_air']}kts, types: {summary_payload['aircraft_types']}, weather: {summary_payload['weather']}")
         
     except Exception as e:
         log(f"Error publishing summary data: {e}", "error")

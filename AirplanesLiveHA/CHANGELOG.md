@@ -154,4 +154,10 @@
  - **FIXED**: Schema validation errors preventing addon from loading in Home Assistant
  - **FIXED**: Invalid 'select' type and 'api_type_options' array in config.yaml
  - **IMPROVED**: Changed api_type to use 'str' type for better Home Assistant compatibility
- - **ENHANCED**: Updated example configuration with new API fields 
+ - **ENHANCED**: Updated example configuration with new API fields
+
+ Version 1.4.11 Changes:
+ - **FIXED**: Critical bug where REST API was using wrong URL format causing 403 errors
+ - **FIXED**: Variable scope error in logging when no aircraft data available
+ - **IMPROVED**: Better error handling for 403 Forbidden responses with helpful messages
+ - **ENHANCED**: Proper auto-configuration of API URLs based on selected type 

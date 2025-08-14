@@ -190,7 +190,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "airplanes.live",
                 "model": "Aircraft Tracker",
-                "sw_version": "1.4.4"
+                "sw_version": "1.4.5"
             }
         }
         if sensor["unit"]:

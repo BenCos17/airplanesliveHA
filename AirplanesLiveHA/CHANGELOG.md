@@ -123,3 +123,6 @@
  - **FIXED**: "max() arg is an empty sequence" error when processing aircraft data
  - **IMPROVED**: Added detailed logging for altitude and speed data processing
  - **IMPROVED**: Better error handling and debugging information for troubleshooting
+
+ Version 1.4.5 Changes:
+ - **NEW**: Added custom addon icon for better visual identification in Home Assistant

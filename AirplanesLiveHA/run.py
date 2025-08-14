@@ -268,7 +268,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
-                "sw_version": "1.4.19"
+                "sw_version": "1.4.20"
             }
         }
         if sensor["unit"]:

@@ -197,3 +197,10 @@
  Version 1.4.17 Changes:
  - **FIXED**: Last Update sensor now shows human-readable date format instead of ISO timestamp
  - **IMPROVED**: Changed from "2025-08-14T23:17:29.367421" to "2025-08-14 23:17:29"
+
+ Version 1.4.18 Changes:
+ - **NEW**: Added separate sensor for "Lowest Altitude Aircraft" (shows flight + altitude)
+ - **NEW**: Added separate sensor for "Closest Distance Aircraft" (shows flight + distance in km)
+ - **IMPROVED**: Replaced single "Closest Aircraft" sensor with two specialized sensors
+ - **ENHANCED**: Now shows both altitude-based and geographic distance-based closest aircraft
+ - **TECHNICAL**: Added Haversine formula for accurate distance calculations from your coordinates

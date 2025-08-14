@@ -4,6 +4,7 @@ import time
 import logging
 import requests
 import paho.mqtt.client as mqtt
+import math
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
@@ -183,11 +184,18 @@ def publish_discovery(client):
             "value_template": "{{ value_json.count }}"
         },
         {
-            "name": "Closest Aircraft",
-            "key": "closest",
+            "name": "Lowest Altitude Aircraft",
+            "key": "closest_lowest",
             "unit": None,
             "device_class": None,
-            "value_template": "{{ value_json.closest }}"
+            "value_template": "{{ value_json.closest_lowest }}"
+        },
+        {
+            "name": "Closest Distance Aircraft",
+            "key": "closest_distance",
+            "unit": None,
+            "device_class": None,
+            "value_template": "{{ value_json.closest_distance }}"
         },
         {
             "name": "Highest Aircraft",
@@ -245,7 +253,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
-                "sw_version": "1.4.17"
+                "sw_version": "1.4.18"
             }
         }
         if sensor["unit"]:
@@ -322,7 +330,8 @@ def publish_summary_data(client, aircraft_list):
             # No aircraft data
             summary_payload = {
                 "count": 0,
-                "closest": "None",
+                "closest_lowest": "None",
+                "closest_distance": "None",
                 "highest": 0,
                 "fastest_ground": 0,
                 "fastest_air": 0,
@@ -333,8 +342,8 @@ def publish_summary_data(client, aircraft_list):
             count = len(aircraft_list)
             log(f"Processing {count} aircraft for summary data")
             
-            # Find closest aircraft (lowest altitude, or first one if no altitude data)
-            closest = "None"
+            # Find closest aircraft (lowest altitude)
+            closest_lowest = "None"
             if aircraft_list:
                 # Filter aircraft with valid altitude data and convert to numbers
                 valid_aircraft = []
@@ -353,11 +362,50 @@ def publish_summary_data(client, aircraft_list):
                     # Find aircraft with lowest altitude
                     closest_aircraft, closest_alt = min(valid_aircraft, key=lambda x: x[1])
                     flight = closest_aircraft.get('flight', 'Unknown')
-                    closest = f"{flight} ({closest_alt}ft)"
+                    closest_lowest = f"{flight} ({closest_alt}ft)"
                 else:
                     # No valid altitude data, use first aircraft
                     closest_aircraft = aircraft_list[0]
-                    closest = closest_aircraft.get('flight', 'Unknown')
+                    closest_lowest = closest_aircraft.get('flight', 'Unknown')
+            
+            # Find geographically closest aircraft
+            closest_distance = "None"
+            if aircraft_list:
+                # Calculate distance for each aircraft from your location
+                aircraft_distances = []
+                for ac in aircraft_list:
+                    lat = ac.get('lat')
+                    lon = ac.get('lon')
+                    if lat is not None and lon is not None:
+                        try:
+                            # Calculate distance using Haversine formula
+                            lat1, lon1 = float(LATITUDE), float(LONGITUDE)
+                            lat2, lon2 = float(lat), float(lon)
+                            
+                            # Convert to radians
+                            lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+                            
+                            # Haversine formula
+                            dlat = lat2 - lat1
+                            dlon = lon2 - lon1
+                            a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+                            c = 2 * math.asin(math.sqrt(a))
+                            distance_km = 6371 * c  # Earth's radius in km
+                            
+                            aircraft_distances.append((ac, distance_km))
+                        except (ValueError, TypeError):
+                            continue
+                
+                log(f"Found {len(aircraft_distances)} aircraft with valid position data")
+                
+                if aircraft_distances:
+                    # Find aircraft with shortest distance
+                    closest_aircraft, closest_dist = min(aircraft_distances, key=lambda x: x[1])
+                    flight = closest_aircraft.get('flight', 'Unknown')
+                    closest_distance = f"{flight} ({closest_dist:.1f}km)"
+                else:
+                    # No valid position data
+                    closest_distance = "Unknown"
             
             # Find highest aircraft
             highest = 0
@@ -453,7 +501,8 @@ def publish_summary_data(client, aircraft_list):
             
             summary_payload = {
                 "count": count,
-                "closest": closest,
+                "closest_lowest": closest_lowest,
+                "closest_distance": closest_distance,
                 "highest": highest,
                 "fastest_ground": fastest_ground,
                 "fastest_air": fastest_air,
@@ -466,7 +515,7 @@ def publish_summary_data(client, aircraft_list):
         summary_topic = f"{MQTT_TOPIC}/summary"
         client.publish(summary_topic, json.dumps(summary_payload), retain=True)
         
-        log(f"Published summary: {summary_payload['count']} aircraft, closest: {summary_payload['closest']}, highest: {summary_payload['highest']}ft, fastest ground: {summary_payload['fastest_ground']}kts, fastest air: {summary_payload['fastest_air']}kts, types: {summary_payload['aircraft_types']}, weather: {summary_payload['weather']}")
+        log(f"Published summary: {summary_payload['count']} aircraft, lowest: {summary_payload['closest_lowest']}, closest: {summary_payload['closest_distance']}, highest: {summary_payload['highest']}ft, fastest ground: {summary_payload['fastest_ground']}kts, fastest air: {summary_payload['fastest_air']}kts, types: {summary_payload['aircraft_types']}, weather: {summary_payload['weather']}")
         
     except Exception as e:
         log(f"Error publishing summary data: {e}", "error")
@@ -548,7 +597,8 @@ def main():
             log("Publishing initial data for discovery...")
             initial_data = {
                 "count": 0,
-                "closest": "None",
+                "closest_lowest": "None",
+                "closest_distance": "None",
                 "highest": 0,
                 "fastest_ground": 0,
                 "fastest_air": 0,

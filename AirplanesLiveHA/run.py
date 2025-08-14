@@ -163,11 +163,32 @@ def publish_discovery(client):
             "value_template": "{{ value_json.highest }}"
         },
         {
-            "name": "Fastest Aircraft",
-            "key": "fastest",
+            "name": "Fastest Aircraft (Ground)",
+            "key": "fastest_ground",
             "unit": "kts",
             "device_class": "speed",
-            "value_template": "{{ value_json.fastest }}"
+            "value_template": "{{ value_json.fastest_ground }}"
+        },
+        {
+            "name": "Fastest Aircraft (Air)",
+            "key": "fastest_air",
+            "unit": "kts",
+            "device_class": "speed",
+            "value_template": "{{ value_json.fastest_air }}"
+        },
+        {
+            "name": "Aircraft Types",
+            "key": "aircraft_types",
+            "unit": None,
+            "device_class": None,
+            "value_template": "{{ value_json.aircraft_types }}"
+        },
+        {
+            "name": "Weather Conditions",
+            "key": "weather",
+            "unit": None,
+            "device_class": None,
+            "value_template": "{{ value_json.weather }}"
         },
         {
             "name": "Last Update",
@@ -190,7 +211,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "airplanes.live",
                 "model": "Aircraft Tracker",
-                "sw_version": "1.4.5"
+                "sw_version": "1.4.6"
             }
         }
         if sensor["unit"]:
@@ -230,7 +251,7 @@ def publish_individual_aircraft(client, aircraft_list):
                 "hex": hex_code,
                 "flight": aircraft.get('flight', 'Unknown'),
                 "altitude": aircraft.get('alt_baro'),
-                "speed": aircraft.get('speed'),
+                "speed": aircraft.get('gs') or aircraft.get('tas') or aircraft.get('ias'),  # Use correct speed fields
                 "track": aircraft.get('track'),
                 "lat": aircraft.get('lat'),
                 "lon": aircraft.get('lon'),
@@ -269,7 +290,8 @@ def publish_summary_data(client, aircraft_list):
                 "count": 0,
                 "closest": "None",
                 "highest": 0,
-                "fastest": 0,
+                "fastest_ground": 0,
+                "fastest_air": 0,
                 "last_update": datetime.now().isoformat()
             }
         else:
@@ -323,31 +345,86 @@ def publish_summary_data(client, aircraft_list):
                 else:
                     log("No valid altitude data found")
             
-            # Find fastest aircraft
-            fastest = 0
+            # Find fastest aircraft (ground speed)
+            fastest_ground = 0
             if aircraft_list:
-                speeds = []
+                ground_speeds = []
                 for ac in aircraft_list:
-                    speed = ac.get('speed')
+                    speed = ac.get('gs')  # Ground speed
                     if speed is not None:
                         try:
                             speed_num = float(speed)
-                            speeds.append(speed_num)
+                            ground_speeds.append(speed_num)
                         except (ValueError, TypeError):
                             continue
                 
-                log(f"Found {len(speeds)} valid speed values")
-                if speeds:
-                    fastest = max(speeds)
-                    log(f"Fastest speed: {fastest}kts")
+                log(f"Found {len(ground_speeds)} valid ground speed values")
+                if ground_speeds:
+                    fastest_ground = max(ground_speeds)
+                    log(f"Fastest ground speed: {fastest_ground}kts")
                 else:
-                    log("No valid speed data found")
+                    log("No valid ground speed data found")
+            
+            # Find fastest aircraft (air speed)
+            fastest_air = 0
+            if aircraft_list:
+                air_speeds = []
+                for ac in aircraft_list:
+                    # Try airspeed fields
+                    speed = ac.get('tas')  # True airspeed
+                    if speed is None:
+                        speed = ac.get('ias')  # Indicated airspeed
+                    
+                    if speed is not None:
+                        try:
+                            speed_num = float(speed)
+                            air_speeds.append(speed_num)
+                        except (ValueError, TypeError):
+                            continue
+                
+                log(f"Found {len(air_speeds)} valid air speed values")
+                if air_speeds:
+                    fastest_air = max(air_speeds)
+                    log(f"Fastest air speed: {fastest_air}kts")
+                else:
+                    log("No valid air speed data found")
+            
+            # Collect aircraft types
+            aircraft_types = []
+            if aircraft_list:
+                for ac in aircraft_list:
+                    ac_type = ac.get('t')  # Aircraft type code
+                    ac_desc = ac.get('desc')  # Full description
+                    if ac_type and ac_type not in aircraft_types:
+                        aircraft_types.append(ac_type)
+            
+            # Collect weather conditions
+            weather_info = "Unknown"
+            if aircraft_list:
+                # Get weather data from first aircraft with valid data
+                for ac in aircraft_list:
+                    wind_dir = ac.get('wd')
+                    wind_speed = ac.get('ws')
+                    temp = ac.get('oat')
+                    if wind_dir is not None or wind_speed is not None or temp is not None:
+                        weather_parts = []
+                        if wind_dir is not None:
+                            weather_parts.append(f"Wind: {wind_dir}°")
+                        if wind_speed is not None:
+                            weather_parts.append(f"{wind_speed}kts")
+                        if temp is not None:
+                            weather_parts.append(f"Temp: {temp}°C")
+                        weather_info = " | ".join(weather_parts)
+                        break
             
             summary_payload = {
                 "count": count,
                 "closest": closest,
                 "highest": highest,
-                "fastest": fastest,
+                "fastest_ground": fastest_ground,
+                "fastest_air": fastest_air,
+                "aircraft_types": ", ".join(aircraft_types) if aircraft_types else "Unknown",
+                "weather": weather_info,
                 "last_update": datetime.now().isoformat()
             }
         
@@ -355,7 +432,7 @@ def publish_summary_data(client, aircraft_list):
         summary_topic = f"{MQTT_TOPIC}/summary"
         client.publish(summary_topic, json.dumps(summary_payload), retain=True)
         
-        log(f"Published summary: {count} aircraft, closest: {summary_payload['closest']}, highest: {highest}ft, fastest: {fastest}kts")
+        log(f"Published summary: {count} aircraft, closest: {summary_payload['closest']}, highest: {highest}ft, fastest ground: {fastest_ground}kts, fastest air: {fastest_air}kts, types: {summary_payload['aircraft_types']}, weather: {summary_payload['weather']}")
         
     except Exception as e:
         log(f"Error publishing summary data: {e}", "error")
@@ -439,7 +516,10 @@ def main():
                 "count": 0,
                 "closest": "None",
                 "highest": 0,
-                "fastest": 0,
+                "fastest_ground": 0,
+                "fastest_air": 0,
+                "aircraft_types": "None",
+                "weather": "Unknown",
                 "last_update": datetime.now().isoformat()
             }
             client.publish(f"{MQTT_TOPIC}/summary", json.dumps(initial_data), retain=True)

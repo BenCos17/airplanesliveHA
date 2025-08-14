@@ -126,3 +126,11 @@
 
  Version 1.4.5 Changes:
  - **NEW**: Added custom addon icon for better visual identification in Home Assistant
+
+ Version 1.4.6 Changes:
+ - **FIXED**: Speed sensors now properly read from airplanes.live API using correct field names
+ - **NEW**: Added separate sensors for ground speed (gs) and air speed (tas/ias)
+ - **NEW**: Added Aircraft Types sensor showing all aircraft types in range
+ - **NEW**: Added Weather Conditions sensor showing wind and temperature data
+ - **IMPROVED**: Better speed data processing with fallback to multiple speed fields
+ - **ENHANCED**: Summary mode now shows 8 sensors with comprehensive aircraft data

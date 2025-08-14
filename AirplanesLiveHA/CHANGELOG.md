@@ -103,3 +103,8 @@
  - **FIXED**: Corrected bug in fastest aircraft calculation logic
  - **ENHANCED**: Individual aircraft tracking now creates proper Home Assistant entities with device grouping
  - **ENHANCED**: Added support for publishing individual aircraft data when detailed tracking is enabled
+
+ Version 1.4.1 Changes:
+ - **FIXED**: Docker build failure caused by pip cache purge command when cache is disabled
+ - **IMPROVED**: Simplified Dockerfile pip installation commands for better reliability
+ - **IMPROVED**: Maintained security improvements while fixing build issues

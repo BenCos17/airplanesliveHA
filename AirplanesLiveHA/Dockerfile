@@ -14,8 +14,7 @@ COPY requirements.txt .
 
 # Install Python dependencies with security best practices
 RUN pip3 install --no-cache-dir --upgrade pip && \
-    pip3 install --no-cache-dir -r requirements.txt && \
-    pip3 cache purge
+    pip3 install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY run.py .

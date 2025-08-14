@@ -190,7 +190,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "airplanes.live",
                 "model": "Aircraft Tracker",
-                "sw_version": "1.4.3"
+                "sw_version": "1.4.4"
             }
         }
         if sensor["unit"]:
@@ -275,6 +275,7 @@ def publish_summary_data(client, aircraft_list):
         else:
             # Process aircraft data
             count = len(aircraft_list)
+            log(f"Processing {count} aircraft for summary data")
             
             # Find closest aircraft (lowest altitude, or first one if no altitude data)
             closest = "None"
@@ -289,6 +290,8 @@ def publish_summary_data(client, aircraft_list):
                             valid_aircraft.append((ac, alt_num))
                         except (ValueError, TypeError):
                             continue
+                
+                log(f"Found {len(valid_aircraft)} aircraft with valid altitude data")
                 
                 if valid_aircraft:
                     # Find aircraft with lowest altitude
@@ -312,8 +315,13 @@ def publish_summary_data(client, aircraft_list):
                             altitudes.append(alt_num)
                         except (ValueError, TypeError):
                             continue
+                
+                log(f"Found {len(altitudes)} valid altitude values")
                 if altitudes:
                     highest = max(altitudes)
+                    log(f"Highest altitude: {highest}ft")
+                else:
+                    log("No valid altitude data found")
             
             # Find fastest aircraft
             fastest = 0
@@ -327,8 +335,13 @@ def publish_summary_data(client, aircraft_list):
                             speeds.append(speed_num)
                         except (ValueError, TypeError):
                             continue
-                if altitudes:
+                
+                log(f"Found {len(speeds)} valid speed values")
+                if speeds:
                     fastest = max(speeds)
+                    log(f"Fastest speed: {fastest}kts")
+                else:
+                    log("No valid speed data found")
             
             summary_payload = {
                 "count": count,
@@ -346,6 +359,9 @@ def publish_summary_data(client, aircraft_list):
         
     except Exception as e:
         log(f"Error publishing summary data: {e}", "error")
+        # Log the aircraft data for debugging
+        if aircraft_list:
+            log(f"Aircraft data sample: {aircraft_list[:2]}", "error")
 
 def on_connect(client, userdata, flags, reasonCode, properties):
     if reasonCode == 0:

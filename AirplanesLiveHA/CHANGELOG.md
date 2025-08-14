@@ -118,3 +118,8 @@
  - **FIXED**: Docker container permission issues with s6-overlay-suexec
  - **FIXED**: "unable to setgid to root: Operation not permitted" error
  - **IMPROVED**: Simplified Dockerfile user management for better compatibility
+
+ Version 1.4.4 Changes:
+ - **FIXED**: "max() arg is an empty sequence" error when processing aircraft data
+ - **IMPROVED**: Added detailed logging for altitude and speed data processing
+ - **IMPROVED**: Better error handling and debugging information for troubleshooting

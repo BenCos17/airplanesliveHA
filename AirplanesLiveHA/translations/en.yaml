@@ -37,7 +37,9 @@ options:
   mqtt_topic: "MQTT Topic"
   mqtt_username: "MQTT Username"
   mqtt_password: "MQTT Password"
+  api_type: "API Type"
   api_url: "API URL"
+  api_key: "API Key"
   latitude: "Latitude"
   longitude: "Longitude"
   radius: "Radius (km)"
@@ -53,7 +55,9 @@ options_description:
   mqtt_topic: "Base topic for MQTT messages"
   mqtt_username: "MQTT authentication username (optional)"
   mqtt_password: "MQTT authentication password (optional)"
-  api_url: "airplanes.live API endpoint"
+  api_type: "Choose between free API or authenticated REST API with API key"
+  api_url: "airplanes.live API endpoint (auto-configured based on API type)"
+  api_key: "Your airplanes.live API key for authenticated access (optional)"
   latitude: "Your location's latitude (-90 to 90)"
   longitude: "Your location's longitude (-180 to 180)"
   radius: "Search radius in kilometers"
@@ -63,3 +67,7 @@ tracking_mode_options:
   summary: "Summary Only - Provides count, closest, highest, and fastest aircraft statistics"
   detailed: "Detailed Tracking - Creates individual entities for each aircraft"
   both: "Both - Provides both summary statistics and detailed tracking" 
+
+api_type_options:
+  free: "Free API - Basic aircraft data with limited filtering"
+  authenticated: "Authenticated REST API - Advanced filtering and more data" 

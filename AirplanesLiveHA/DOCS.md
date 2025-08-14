@@ -1,7 +1,7 @@
 # Airplanes Live API Add-on Documentation
 
 ## Overview
-The Airplanes Live API Add-on integrates with [airplanes.live](https://airplanes.live) to provide real-time aircraft tracking data in Home Assistant via MQTT.
+The Airplanes Live API Add-on integrates with [airplanes.live](https://airplanes.live) to provide real-time aircraft tracking data in Home Assistant via MQTT. Supports both the free feeder API and the authenticated REST API for premium features.
 
 ## Features
 
@@ -38,8 +38,24 @@ The Airplanes Live API Add-on integrates with [airplanes.live](https://airplanes
 - **MQTT Port**: MQTT broker port
 - **MQTT Topic**: Base MQTT topic
 - **MQTT Username/Password**: Authentication (optional)
-- **API URL**: airplanes.live API endpoint
+- **API Type**: Choose between "feeder" (free) or "authenticated" (REST API)
+- **API Key**: Your airplanes.live API key for authenticated access
 - **Tracking Mode**: summary, detailed, or both
+
+## API Types
+
+### Feeder API (feeder)
+- **Endpoint**: `https://api.airplanes.live/v2/point`
+- **Features**: Basic aircraft data, position tracking
+- **Limitations**: Basic filtering, limited data fields
+- **Radius**: Uses kilometers
+
+### Authenticated REST API (feeder key based)
+- **Endpoint**: `https://rest.api.airplanes.live`
+- **Features**: Advanced filtering, comprehensive data, military aircraft
+- **Requirements**: API key from airplanes.live
+- **Radius**: Automatically converts km to nautical miles
+- **Advanced Filters**: Altitude ranges, aircraft types, military, PIA, LADD
 
 ## MQTT Topics
 
@@ -55,18 +71,54 @@ The Airplanes Live API Add-on integrates with [airplanes.live](https://airplanes
 ## API Data Fields
 
 The addon processes these fields from airplanes.live API:
+
+### Position & Movement
 - **Position**: `lat`, `lon`, `alt_baro`, `track`
 - **Speed**: `gs` (ground), `tas` (true air), `ias` (indicated)
-- **Aircraft**: `flight`, `t` (type), `desc` (description), `r` (registration)
-- **Weather**: `wd` (wind direction), `ws` (wind speed), `oat` (temperature)
-- **Navigation**: `squawk`, `nav_altitude_mcp`, `nav_heading`
+- **Distance**: `dst` (distance in nautical miles - REST API only)
+- **Direction**: `dir` (direction from center point - REST API only)
+
+### Aircraft Information
+- **Flight**: `flight`, `t` (type), `desc` (description), `r` (registration)
+- **Operator**: `ownOp` (owner/operator)
+- **Year**: `year` (manufacturing year)
+
+### Weather & Environment
+- **Wind**: `wd` (wind direction), `ws` (wind speed)
+- **Temperature**: `oat` (outside air temperature)
+- **Pressure**: `nav_qnh` (barometric pressure)
+
+### Navigation & Systems
+- **Squawk**: `squawk` (transponder code)
+- **Navigation**: `nav_altitude_mcp`, `nav_heading`
+- **Technical**: `mlat`, `tisb`, `messages`, `rssi`
+
+## Advanced Filtering (REST API Only)
+
+### Altitude Filters
+- `&above_alt_baro=<altitude>` - Aircraft above specified altitude
+- `&below_alt_baro=<altitude>` - Aircraft below specified altitude
+
+### Aircraft Type Filters
+- `&filter_type=<type1>,<type2>` - Specific ICAO aircraft types
+- Examples: A321, B738, B77L
+
+### Special Categories
+- `&filter_mil` - Military aircraft only
+- `&filter_pia` - PIA hex code aircraft
+- `&filter_ladd` - LADD list aircraft
+
+### Position Filters
+- `&filter_with_pos` - Only aircraft with valid position data
 
 ## Installation
 
 1. Add the repository to Home Assistant
 2. Install "Airplanes Live API" addon
 3. Configure your location and preferences
-4. Start the addon
+4. Choose API type (feeder or authenticated)
+5. Add API key if using authenticated mode
+6. Start the addon
 
 ## Troubleshooting
 
@@ -74,11 +126,13 @@ The addon processes these fields from airplanes.live API:
 - **No aircraft showing**: Check coordinates and radius
 - **MQTT connection issues**: Verify broker settings
 - **Entity naming conflicts**: Ensure clean configuration
+- **API key errors**: Verify API key and type selection
 
 ### Log Analysis
 - Check addon logs for detailed information
 - Look for API response data
 - Verify MQTT publishing status
+- Check API type and authentication status
 
 ## Security
 
@@ -86,21 +140,25 @@ The addon processes these fields from airplanes.live API:
 - **Network Access**: Required for API and MQTT
 - **System Access**: Minimal, non-privileged
 - **Container**: Standard security model
+- **API Keys**: Stored securely in addon configuration
 
 ## Development
 
-- **Version**: 1.4.7
+- **Version**: 1.4.9
 - **Base Image**: ghcr.io/hassio-addons/base:14.0.0
 - **Architectures**: aarch64, amd64, armhf, armv7, i386
 - **License**: MIT
+- **API Support**: Both feeder and REST APIs
 
 ## Support
 
 - **GitHub**: [BenCos17/airplanesliveHA](https://github.com/BenCos17/airplanesliveHA)
 - **Issues**: Report bugs and feature requests on GitHub
 - **Documentation**: See README.md for detailed usage instructions
+- **API Documentation**: [airplanes.live REST API](https://airplanes.live/docs)
 
 ---
 
 *Last updated: August 14, 2025*
 *Maintainer: BenCos17*
+*Powered by: airplanes.live*

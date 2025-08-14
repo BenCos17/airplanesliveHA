@@ -52,7 +52,9 @@ config = load_config()
 log(f"Raw config loaded: {config}")
 
 # Load config from options.json with fallback defaults
+API_TYPE = config.get("api_type", "free")
 API_URL = config.get("api_url", "https://api.airplanes.live/v2/point")
+API_KEY = config.get("api_key", "")
 LATITUDE = config.get("latitude", "53.2707")
 LONGITUDE = config.get("longitude", "-9.0568")
 RADIUS = config.get("radius", 50)
@@ -62,9 +64,18 @@ MQTT_PORT = config.get("mqtt_port", 1883)
 MQTT_TOPIC = config.get("mqtt_topic", "airplanes/live")
 MQTT_USERNAME = config.get("mqtt_username", "")
 MQTT_PASSWORD = config.get("mqtt_password", "")
-TRACKING_MODE = config.get("tracking_mode", "summary")  # New: summary, detailed, both
+TRACKING_MODE = config.get("tracking_mode", "summary")
 
-log(f"Configuration loaded: API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}")
+# Auto-configure API URL based on type
+if API_TYPE == "authenticated":
+    API_URL = "https://rest.api.airplanes.live"
+    # Convert radius from km to nautical miles for REST API
+    RADIUS_NMI = RADIUS * 0.539957
+else:
+    # Free API uses kilometers
+    RADIUS_NMI = RADIUS
+
+log(f"Configuration loaded: API_TYPE={API_TYPE}, API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}km ({RADIUS_NMI:.1f}nm)")
 log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}, Tracking Mode: {TRACKING_MODE}")
 
 def validate_config():
@@ -101,11 +112,22 @@ def validate_config():
 
 def fetch_airplane_data() -> Optional[List[Dict[str, Any]]]:
     """Fetch airplane data from API with improved error handling"""
-    url = f"{API_URL}/{LATITUDE}/{LONGITUDE}/{RADIUS}"
+    
+    # Construct URL based on API type
+    if API_TYPE == "authenticated":
+        # REST API with circle query and filters
+        url = f"{API_URL}/?circle={LATITUDE},{LONGITUDE},{RADIUS_NMI:.1f}"
+        headers = {}
+        if API_KEY:
+            headers["auth"] = API_KEY
+    else:
+        # Free API
+        url = f"{API_URL}/{LATITUDE}/{LONGITUDE}/{RADIUS}"
+        headers = {}
     
     try:
         log(f"Fetching data from: {url}")
-        resp = requests.get(url, timeout=15)  # Increased timeout
+        resp = requests.get(url, headers=headers, timeout=15)
         resp.raise_for_status()
         data = resp.json()
         
@@ -113,7 +135,7 @@ def fetch_airplane_data() -> Optional[List[Dict[str, Any]]]:
         if isinstance(data, dict) and 'ac' in data:
             aircraft_list = data['ac']
             count = len(aircraft_list) if isinstance(aircraft_list, list) else 0
-            log(f"Fetched {count} aircraft")
+            log(f"Fetched {count} aircraft using {API_TYPE} API")
             return aircraft_list
         else:
             log(f"Unexpected API response format: {type(data)}", "warning")
@@ -194,7 +216,7 @@ def publish_discovery(client):
             "name": "Last Update",
             "key": "last_update",
             "unit": None,
-            "device_class": "timestamp",
+            "device_class": None,
             "value_template": "{{ value_json.last_update }}"
         }
     ]
@@ -211,7 +233,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
-                "sw_version": "1.4.8"
+                "sw_version": "1.4.9"
             }
         }
         if sensor["unit"]:
@@ -459,7 +481,7 @@ def main():
         log("Configuration validation failed. Please check your settings.", "critical")
         return
     
-    log(f"Configuration: API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}")
+    log(f"Configuration: API_TYPE={API_TYPE}, API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}km ({RADIUS_NMI:.1f}nm)")
     log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}")
     
     client = mqtt.Client(protocol=mqtt.MQTTv5)

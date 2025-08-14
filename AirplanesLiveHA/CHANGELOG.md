@@ -141,4 +141,11 @@
  - **ENHANCED**: Better organization and easier identification of sensors in Home Assistant
 
  Version 1.4.8 Changes:
- - **CHANGED**: Manufacturer from "airplanes.live" to "BenCos17" in device information to make it more clear it's not offical, add note about being powered by airplanes.live in also 
+ - **CHANGED**: Manufacturer from "airplanes.live" to "BenCos17" in device information to make it more clear it's not offical, add note about being powered by airplanes.live in also
+
+ Version 1.4.9 Changes:
+ - **NEW**: Added support for airplanes.live REST API with API key authentication
+ - **NEW**: Added API type selection (feeder vs authenticated feeder)
+ - **NEW**: Added API key configuration option for key based features
+ - **IMPROVED**: Automatic radius conversion (km to nautical miles for REST API)
+ - **ENHANCED**: Support for advanced filtering and more data with authenticated API 

@@ -17,9 +17,18 @@ configuration:
   mqtt_password:
     name: "Pasfhocal MQTT"
     description: "Pasfhocal chun fíordheimhniú broicéara MQTT"
+  api_type:
+    name: "Cineál API"
+    description: "Roghnaigh idir API beathaitheoir bunúsach nó API REST le heochair"
   api_url:
     name: "URL API"
     description: "URL bunúsach d'API Airplanes.Live"
+  api_key:
+    name: "Eochair API"
+    description: "Do eochair API airplanes.live chun rochtain fhíordheimhnithe"
+  disable_auto_config:
+    name: "Díchumasaigh Auto-Cumrú"
+    description: "Nuair a chumasaítear é, úsáideann sé do api_url agus suíomhanna ga beacht"
   latitude:
     name: "Domhanleithead"
     description: "Domhanleithead lárnach don limistéar monatóireachta"
@@ -28,48 +37,7 @@ configuration:
     description: "Domhanfhad lárnach don limistéar monatóireachta"
   radius:
     name: "Ga"
-    description: "Ga i gciliméadair timpeall an phointe lárnaigh le monatóireacht" 
-
-options:
-  update_interval: "Tréimhse Nuashonraithe (soicindí)"
-  mqtt_broker: "Broicéir MQTT"
-  mqtt_port: "Port MQTT"
-  mqtt_topic: "Ábhar MQTT"
-  mqtt_username: "Ainm Úsáideora MQTT"
-  mqtt_password: "Pasfhocal MQTT"
-  api_type: "Cineál API"
-  api_url: "URL API"
-  api_key: "Eochair API"
-  disable_auto_config: "Díchumasaigh Auto-Cumrú"
-  latitude: "Domhanleithead"
-  longitude: "Domhanfhad"
-  radius: "Ga (km)"
-  tracking_mode: "Mód Rianúcháin"
-  tracking_mode_summary: "Achoimre Amháin"
-  tracking_mode_detailed: "Rianúchán Mionsonraithe"
-  tracking_mode_both: "Achoimre agus Rianúchán Mionsonraithe"
-
-options_description:
-  update_interval: "Cé chomh minic a bhailíonn tú sonraí nua ón API"
-  mqtt_broker: "Seoladh broicéara MQTT (de ghnáth core-mosquitto)"
-  mqtt_port: "Port broicéara MQTT (de ghnáth 1883)"
-  mqtt_topic: "Ábhar bunúsach do theachtaireachtaí MQTT"
-  mqtt_username: "Ainm úsáideora fíordheimhniú MQTT (roghnach)"
-  mqtt_password: "Pasfhocal fíordheimhniú MQTT (roghnach)"
-  api_type: "Roghnaigh idir API beathaitheoir bunúsach nó API REST le heochair (teastaíonn ranníocaíocht sonraí ón dá cheann)"
-  api_url: "Críochphointe API airplanes.live (cumraithe go huathoibríoch bunaithe ar chineál API)"
-  api_key: "Do eochair API airplanes.live chun rochtain fhíordheimhnithe (roghnach)"
-  disable_auto_config: "Nuair a chumasaítear é, úsáideann sé do api_url agus suíomhanna ga beacht gan tiontú uathoibríoch"
-  latitude: "Domhanleithead do shuíomh (-90 go 90)"
-  longitude: "Domhanfhad do shuíomh (-180 go 180)"
-  radius: "Ga cuardaigh i gciliméadair"
-  tracking_mode: "Roghnaigh idir staitisticí achoimre amháin, rianúchán mionsonraithe eitleáin aonair, nó an dá cheann"
-
-tracking_mode_options:
-  summary: "Achoimre Amháin - Soláthraíonn staitisticí comhaireamh, eitleán is gaire, is airde, agus is tapúla"
-  detailed: "Rianúchán Mionsonraithe - Cruthaíonn eintitis aonair do gach eitleán"
-  both: "An Dá Cheann - Soláthraíonn staitisticí achoimre agus rianúchán mionsonraithe" 
-
-api_type_options:
-  unauthenticated: "API Beathaitheoir Bunúsach - Sonraí eitleáin bunúsacha (teastaíonn ranníocaíocht sonraí chuig airplanes.live)"
-  authenticated: "API REST le hEochair - Scagadh casta agus níos mó sonraí le heochair API (teastaíonn ranníocaíocht sonraí freisin)" 
+    description: "Ga i gciliméadair timpeall an phointe lárnaigh le monatóireacht"
+  tracking_mode:
+    name: "Mód Rianúcháin"
+    description: "Roghnaigh idir staitisticí achoimre amháin, rianúchán mionsonraithe eitleáin aonair, nó an dá cheann" 

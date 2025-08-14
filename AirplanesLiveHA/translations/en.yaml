@@ -29,3 +29,37 @@ configuration:
   radius:
     name: "Radius"
     description: "Radius in kilometers around the center point to monitor" 
+
+options:
+  update_interval: "Update Interval (seconds)"
+  mqtt_broker: "MQTT Broker"
+  mqtt_port: "MQTT Port"
+  mqtt_topic: "MQTT Topic"
+  mqtt_username: "MQTT Username"
+  mqtt_password: "MQTT Password"
+  api_url: "API URL"
+  latitude: "Latitude"
+  longitude: "Longitude"
+  radius: "Radius (km)"
+  tracking_mode: "Tracking Mode"
+  tracking_mode_summary: "Summary Only"
+  tracking_mode_detailed: "Detailed Tracking"
+  tracking_mode_both: "Both Summary and Detailed"
+
+options_description:
+  update_interval: "How often to fetch new data from the API"
+  mqtt_broker: "MQTT broker address (usually core-mosquitto)"
+  mqtt_port: "MQTT broker port (usually 1883)"
+  mqtt_topic: "Base topic for MQTT messages"
+  mqtt_username: "MQTT authentication username (optional)"
+  mqtt_password: "MQTT authentication password (optional)"
+  api_url: "airplanes.live API endpoint"
+  latitude: "Your location's latitude (-90 to 90)"
+  longitude: "Your location's longitude (-180 to 180)"
+  radius: "Search radius in kilometers"
+  tracking_mode: "Choose between summary statistics only, detailed individual aircraft tracking, or both"
+
+tracking_mode_options:
+  summary: "Summary Only - Provides count, closest, highest, and fastest aircraft statistics"
+  detailed: "Detailed Tracking - Creates individual entities for each aircraft"
+  both: "Both - Provides both summary statistics and detailed tracking" 

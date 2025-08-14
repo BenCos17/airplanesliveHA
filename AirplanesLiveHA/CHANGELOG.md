@@ -89,3 +89,17 @@
  - Added proper type conversion and error handling for string/number comparisons
  - Improved robustness when API returns mixed data types
  - Fixed "'<' not supported between instances of 'str' and 'int'" error
+
+ Version 1.4.0 Changes:
+ - **NEW**: Added flexible tracking modes (summary, detailed, both) for customizable aircraft monitoring
+ - **IMPROVED**: Implemented proper logging system with configurable levels (INFO, WARNING, ERROR, CRITICAL)
+ - **IMPROVED**: Added comprehensive configuration validation for coordinates, radius, and update intervals
+ - **IMPROVED**: Enhanced error handling with specific exception types and better error messages
+ - **IMPROVED**: Increased API timeout from 10 to 15 seconds for better reliability
+ - **IMPROVED**: Added type hints throughout the codebase for better maintainability
+ - **IMPROVED**: Better MQTT connection handling with improved retry logic
+ - **FIXED**: Improved type handling for aircraft data processing to prevent runtime errors
+ - **FIXED**: Better error messages and logging for easier troubleshooting
+ - **FIXED**: Corrected bug in fastest aircraft calculation logic
+ - **ENHANCED**: Individual aircraft tracking now creates proper Home Assistant entities with device grouping
+ - **ENHANCED**: Added support for publishing individual aircraft data when detailed tracking is enabled

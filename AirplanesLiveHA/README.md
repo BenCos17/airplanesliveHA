@@ -23,7 +23,10 @@ This add-on integrates with the [airplanes.live](https://airplanes.live) API to 
 - **Real-time aircraft tracking** using the airplanes.live API
 - **MQTT integration** for Home Assistant entity discovery
 - **Configurable parameters** for location, radius, and update intervals
+- **Flexible tracking modes** - choose between summary statistics, detailed tracking, or both
 - **Automatic entity creation** in Home Assistant for each detected aircraft
+- **Improved error handling** and logging with configurable levels
+- **Configuration validation** to prevent invalid settings
 
 ## Configuration
 
@@ -42,6 +45,10 @@ This add-on integrates with the [airplanes.live](https://airplanes.live) API to 
 - **MQTT Username**: MQTT authentication username (optional)
 - **MQTT Password**: MQTT authentication password (optional)
 - **API URL**: airplanes.live API endpoint (default: https://api.airplanes.live/v2/point)
+- **Tracking Mode**: Choose tracking level (default: summary)
+  - **summary**: Summary statistics only (count, closest, highest, fastest)
+  - **detailed**: Individual aircraft tracking with separate entities
+  - **both**: Both summary and detailed tracking
 
 ## Installation
 
@@ -54,22 +61,42 @@ This add-on integrates with the [airplanes.live](https://airplanes.live) API to 
 
 ### Home Assistant Integration
 
-Once the add-on is running, it will automatically create sensor entities in Home Assistant for each detected aircraft. These entities will include:
+Once the add-on is running, it will automatically create sensor entities in Home Assistant based on your tracking mode selection:
 
+#### Summary Mode (Default)
+Creates a single device with 5 sensors:
+- **Aircraft Count**: Total number of aircraft in range
+- **Closest Aircraft**: Flight number and altitude of lowest aircraft
+- **Highest Aircraft**: Maximum altitude in feet
+- **Fastest Aircraft**: Maximum speed in knots
+- **Last Update**: Timestamp of last data update
+
+#### Detailed Mode
+Creates individual entities for each aircraft including:
 - **Altitude**: Aircraft altitude in feet
 - **Speed**: Aircraft speed in knots
 - **Track**: Aircraft heading in degrees
 - **Flight Number**: Flight identifier
 - **Aircraft Type**: ICAO aircraft type code
 - **Registration**: Aircraft registration number
+- **Position**: Latitude and longitude coordinates
+
+#### Both Mode
+Combines both summary and detailed tracking for comprehensive monitoring.
 
 ### MQTT Topics
 
 The add-on publishes to the following MQTT topics:
 
-- `airplanes/live/<hex>/state` - Aircraft state data
-- `airplanes/live/<hex>/attributes` - Aircraft attributes
-- `homeassistant/sensor/airplane_<hex>_<attribute>/config` - Home Assistant discovery messages
+#### Summary Data
+- `airplanes/live/summary` - Summary statistics data
+
+#### Individual Aircraft (Detailed Mode)
+- `airplanes/live/aircraft/<hex>/state` - Individual aircraft state data
+- `homeassistant/sensor/airplane_<hex>_info/config` - Home Assistant discovery messages
+
+#### Discovery
+- `homeassistant/sensor/airplanes_live_<attribute>/config` - Home Assistant discovery messages
 
 ## Troubleshooting
 
@@ -78,13 +105,29 @@ The add-on publishes to the following MQTT topics:
 1. **No aircraft showing**: Check your latitude/longitude coordinates and radius
 2. **MQTT connection issues**: Verify MQTT broker is running and credentials are correct
 3. **API errors**: Check the add-on logs for detailed error messages
+4. **Configuration validation errors**: Ensure coordinates are within valid ranges
 
 ### Logs
+
+The add-on now provides structured logging with different levels:
+- **INFO**: Normal operation messages
+- **WARNING**: Non-critical issues that don't stop operation
+- **ERROR**: Problems that affect functionality
+- **CRITICAL**: Severe issues that prevent operation
 
 Check the add-on logs in Home Assistant for detailed information about:
 - API requests and responses
 - MQTT connection status
 - Aircraft data processing
+- Configuration validation results
+
+### Configuration Validation
+
+The add-on automatically validates your configuration:
+- Latitude must be between -90 and 90
+- Longitude must be between -180 and 180
+- Radius must be a positive number
+- Update interval must be 1 second or greater
 
 ## Support
 
@@ -93,3 +136,14 @@ For issues and feature requests, please visit the [GitHub repository](https://gi
 ## License
 
 This project is licensed under the MIT License.
+
+## Changelog
+
+### Version 1.4.0
+- **NEW**: Added flexible tracking modes (summary, detailed, both)
+- **IMPROVED**: Implemented proper logging system with configurable levels
+- **IMPROVED**: Added comprehensive configuration validation
+- **IMPROVED**: Enhanced error handling with specific exception types
+- **IMPROVED**: Increased API timeout for better reliability
+- **FIXED**: Improved type handling for aircraft data processing
+- **FIXED**: Better error messages and logging for troubleshooting

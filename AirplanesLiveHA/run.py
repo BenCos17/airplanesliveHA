@@ -1,12 +1,32 @@
 import os
 import json
 import time
+import logging
 import requests
 import paho.mqtt.client as mqtt
 from datetime import datetime
+from typing import Optional, List, Dict, Any
 
-def log(msg):
-    print(f"[AirplanesLive] {msg}", flush=True)
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+
+def log(msg: str, level: str = "info"):
+    """Log message with specified level"""
+    if level == "debug":
+        logger.debug(msg)
+    elif level == "warning":
+        logger.warning(msg)
+    elif level == "error":
+        logger.error(msg)
+    elif level == "critical":
+        logger.critical(msg)
+    else:
+        logger.info(msg)
 
 def load_config():
     """Load configuration from Home Assistant options.json file"""
@@ -17,19 +37,19 @@ def load_config():
         log(f"Loaded configuration from {config_path}")
         return config
     except FileNotFoundError:
-        log(f"Configuration file {config_path} not found, using defaults")
+        log(f"Configuration file {config_path} not found, using defaults", "warning")
         return {}
     except json.JSONDecodeError as e:
-        log(f"Error parsing configuration file: {e}, using defaults")
+        log(f"Error parsing configuration file: {e}, using defaults", "error")
         return {}
     except Exception as e:
-        log(f"Error loading configuration: {e}, using defaults")
+        log(f"Error loading configuration: {e}, using defaults", "error")
         return {}
 
 # Load configuration
 config = load_config()
 
-print(f"[AirplanesLive] Raw config loaded: {config}")
+log(f"Raw config loaded: {config}")
 
 # Load config from options.json with fallback defaults
 API_URL = config.get("api_url", "https://api.airplanes.live/v2/point")
@@ -42,28 +62,77 @@ MQTT_PORT = config.get("mqtt_port", 1883)
 MQTT_TOPIC = config.get("mqtt_topic", "airplanes/live")
 MQTT_USERNAME = config.get("mqtt_username", "")
 MQTT_PASSWORD = config.get("mqtt_password", "")
+TRACKING_MODE = config.get("tracking_mode", "summary")  # New: summary, detailed, both
 
 log(f"Configuration loaded: API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}")
-log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}")
+log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}, Tracking Mode: {TRACKING_MODE}")
 
-def fetch_airplane_data():
+def validate_config():
+    """Validate configuration values"""
+    errors = []
+    
+    try:
+        lat = float(LATITUDE)
+        if not -90 <= lat <= 90:
+            errors.append(f"Latitude {lat} is out of range (-90 to 90)")
+    except ValueError:
+        errors.append(f"Invalid latitude: {LATITUDE}")
+    
+    try:
+        lon = float(LONGITUDE)
+        if not -180 <= lon <= 180:
+            errors.append(f"Longitude {lon} is out of range (-180 to 180)")
+    except ValueError:
+        errors.append(f"Invalid longitude: {LONGITUDE}")
+    
+    if not isinstance(RADIUS, (int, float)) or RADIUS <= 0:
+        errors.append(f"Invalid radius: {RADIUS} (must be positive number)")
+    
+    if not isinstance(UPDATE_INTERVAL, (int, float)) or UPDATE_INTERVAL < 1:
+        errors.append(f"Invalid update interval: {UPDATE_INTERVAL} (must be >= 1)")
+    
+    if errors:
+        for error in errors:
+            log(f"Configuration error: {error}", "error")
+        return False
+    
+    log("Configuration validation passed")
+    return True
+
+def fetch_airplane_data() -> Optional[List[Dict[str, Any]]]:
+    """Fetch airplane data from API with improved error handling"""
     url = f"{API_URL}/{LATITUDE}/{LONGITUDE}/{RADIUS}"
+    
     try:
         log(f"Fetching data from: {url}")
-        resp = requests.get(url, timeout=10)
+        resp = requests.get(url, timeout=15)  # Increased timeout
         resp.raise_for_status()
         data = resp.json()
         
         # Extract aircraft array from response
         if isinstance(data, dict) and 'ac' in data:
             aircraft_list = data['ac']
-            log(f"Fetched {len(aircraft_list) if isinstance(aircraft_list, list) else 0} aircraft")
+            count = len(aircraft_list) if isinstance(aircraft_list, list) else 0
+            log(f"Fetched {count} aircraft")
             return aircraft_list
         else:
-            log(f"Unexpected API response format: {type(data)}")
+            log(f"Unexpected API response format: {type(data)}", "warning")
             return None
+            
+    except requests.exceptions.Timeout:
+        log("API request timed out", "error")
+        return None
+    except requests.exceptions.ConnectionError:
+        log("Failed to connect to API - network error", "error")
+        return None
+    except requests.exceptions.HTTPError as e:
+        log(f"API HTTP error: {e}", "error")
+        return None
+    except json.JSONDecodeError as e:
+        log(f"Failed to parse API response: {e}", "error")
+        return None
     except Exception as e:
-        log(f"Error fetching airplane data: {e}")
+        log(f"Unexpected error fetching airplane data: {e}", "error")
         return None
 
 def publish_discovery(client):
@@ -121,7 +190,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "airplanes.live",
                 "model": "Aircraft Tracker",
-                "sw_version": "1.0"
+                "sw_version": "1.4.0"
             }
         }
         if sensor["unit"]:
@@ -135,12 +204,64 @@ def publish_discovery(client):
             client.publish(discovery_topic, payload_json, retain=True)
             log(f"Published discovery for {sensor['name']}")
         except Exception as e:
-            log(f"Error publishing discovery for {sensor['name']}: {e}")
+            log(f"Error publishing discovery for {sensor['name']}: {e}", "error")
     
     log("Discovery publishing completed")
 
+def publish_individual_aircraft(client, aircraft_list):
+    """Publish individual aircraft data if tracking mode allows it"""
+    if TRACKING_MODE not in ["detailed", "both"]:
+        return
+    
+    if not aircraft_list or not isinstance(aircraft_list, list):
+        return
+    
+    log(f"Publishing individual aircraft data for {len(aircraft_list)} aircraft")
+    
+    for aircraft in aircraft_list:
+        try:
+            hex_code = aircraft.get('hex', 'unknown')
+            if hex_code == 'unknown':
+                continue
+                
+            # Publish aircraft state
+            state_topic = f"{MQTT_TOPIC}/aircraft/{hex_code}/state"
+            state_payload = {
+                "hex": hex_code,
+                "flight": aircraft.get('flight', 'Unknown'),
+                "altitude": aircraft.get('alt_baro'),
+                "speed": aircraft.get('speed'),
+                "track": aircraft.get('track'),
+                "lat": aircraft.get('lat'),
+                "lon": aircraft.get('lon'),
+                "last_seen": datetime.now().isoformat()
+            }
+            
+            client.publish(state_topic, json.dumps(state_payload), retain=True)
+            
+            # Publish discovery for individual aircraft
+            discovery_topic = f"homeassistant/sensor/airplane_{hex_code}_info/config"
+            discovery_payload = {
+                "name": f"Aircraft {hex_code}",
+                "state_topic": state_topic,
+                "unique_id": f"airplane_{hex_code}_info",
+                "value_template": "{{ value_json.flight }}",
+                "device": {
+                    "identifiers": [f"airplane_{hex_code}"],
+                    "name": f"Aircraft {hex_code}",
+                    "manufacturer": "Unknown",
+                    "model": aircraft.get('t', 'Unknown'),
+                    "via_device": "airplanes_live_device"
+                }
+            }
+            
+            client.publish(discovery_topic, json.dumps(discovery_payload), retain=True)
+            
+        except Exception as e:
+            log(f"Error publishing individual aircraft {hex_code}: {e}", "error")
+
 def publish_summary_data(client, aircraft_list):
-    """Publish summary data to MQTT"""
+    """Publish summary data to MQTT with improved error handling"""
     try:
         if not aircraft_list or not isinstance(aircraft_list, list):
             # No aircraft data
@@ -206,7 +327,7 @@ def publish_summary_data(client, aircraft_list):
                             speeds.append(speed_num)
                         except (ValueError, TypeError):
                             continue
-                if speeds:
+                if altitudes:
                     fastest = max(speeds)
             
             summary_payload = {
@@ -224,21 +345,27 @@ def publish_summary_data(client, aircraft_list):
         log(f"Published summary: {count} aircraft, closest: {summary_payload['closest']}, highest: {highest}ft, fastest: {fastest}kts")
         
     except Exception as e:
-        log(f"Error publishing summary data: {e}")
+        log(f"Error publishing summary data: {e}", "error")
 
 def on_connect(client, userdata, flags, reasonCode, properties):
     if reasonCode == 0:
-        log(f"Connected to MQTT broker successfully")
+        log("Connected to MQTT broker successfully")
     else:
-        log(f"Connected to MQTT broker with reason code: {reasonCode}")
+        log(f"Connected to MQTT broker with reason code: {reasonCode}", "warning")
         if reasonCode == 5:
-            log("MQTT authentication failed - check username/password")
+            log("MQTT authentication failed - check username/password", "error")
 
 def on_disconnect(client, userdata, rc, properties=None):
-    log(f"Disconnected from MQTT broker with reason code: {rc}")
+    log(f"Disconnected from MQTT broker with reason code: {rc}", "warning")
 
 def main():
-    log("Starting Airplanes Live Home Assistant Add-on")
+    log("Starting Airplanes Live Home Assistant Add-on v1.4.0")
+    
+    # Validate configuration first
+    if not validate_config():
+        log("Configuration validation failed. Please check your settings.", "critical")
+        return
+    
     log(f"Configuration: API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}")
     log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}")
     
@@ -249,7 +376,7 @@ def main():
         client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
         log("MQTT authentication configured")
     else:
-        log("No MQTT credentials provided - attempting anonymous connection")
+        log("No MQTT credentials provided - attempting anonymous connection", "warning")
     
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
@@ -270,18 +397,18 @@ def main():
                 log("MQTT connection established successfully")
                 break
             else:
-                log("MQTT connection failed - retrying...")
+                log("MQTT connection failed - retrying...", "warning")
                 client.loop_stop()
                 retry_count += 1
                 time.sleep(5)
                 
         except Exception as e:
-            log(f"MQTT connection failed: {e}. Retrying in 5 seconds...")
+            log(f"MQTT connection failed: {e}. Retrying in 5 seconds...", "error")
             retry_count += 1
             time.sleep(5)
     
     if not client.is_connected():
-        log("Failed to connect to MQTT broker after maximum retries. Continuing without MQTT...")
+        log("Failed to connect to MQTT broker after maximum retries. Continuing without MQTT...", "critical")
         client = None
 
     try:
@@ -306,14 +433,15 @@ def main():
             data = fetch_airplane_data()
             if client and client.is_connected():
                 publish_summary_data(client, data)
+                publish_individual_aircraft(client, data)
             else:
-                log("MQTT not connected - skipping publish")
+                log("MQTT not connected - skipping publish", "warning")
             log(f"Sleeping for {UPDATE_INTERVAL} seconds")
             time.sleep(UPDATE_INTERVAL)
     except KeyboardInterrupt:
         log("Shutting down.")
     except Exception as e:
-        log(f"Unexpected error: {e}")
+        log(f"Unexpected error: {e}", "critical")
     finally:
         if client:
             client.loop_stop()

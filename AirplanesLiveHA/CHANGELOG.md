@@ -108,3 +108,8 @@
  - **FIXED**: Docker build failure caused by pip cache purge command when cache is disabled
  - **IMPROVED**: Simplified Dockerfile pip installation commands for better reliability
  - **IMPROVED**: Maintained security improvements while fixing build issues
+
+ Version 1.4.2 Changes:
+ - **FIXED**: Schema validation errors preventing addon from loading in Home Assistant
+ - **FIXED**: Invalid 'select' type and 'tracking_mode_options' array in config.yaml
+ - **IMPROVED**: Changed tracking_mode to use 'str' type for better Home Assistant compatibility

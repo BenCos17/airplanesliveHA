@@ -18,6 +18,7 @@ mqtt_password: ""                     # MQTT password (optional)
 api_type: free                        # API type: "free" or "authenticated"
 api_url: "https://api.airplanes.live/v2/point"  # API endpoint (auto-configured)
 api_key: ""                           # Your airplanes.live API key (optional)
+disable_auto_config: false            # Set to true to use exact api_url and radius settings
 
 # Tracking Mode
 # Options: "summary", "detailed", "both"

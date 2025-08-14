@@ -57,6 +57,33 @@ The Airplanes Live API Add-on integrates with [airplanes.live](https://airplanes
 - **Radius**: Automatically converts km to nautical miles
 - **Advanced Filters**: Altitude ranges, aircraft types, military, PIA, LADD
 
+## Auto-Configuration
+
+The addon automatically configures the correct API URL and radius format based on your `api_type` setting:
+
+### Default Behavior
+- **Free API**: Automatically uses `https://api.airplanes.live/v2/point` with kilometer radius
+- **REST API**: Automatically uses `https://rest.api.airplanes.live` with nautical mile radius conversion
+
+This prevents common configuration errors and ensures API compatibility.
+
+### Disabling Auto-Configuration
+
+If you need custom API endpoints or radius handling, you can disable auto-configuration:
+
+```yaml
+disable_auto_config: true
+api_url: "https://your-custom-endpoint.com/api"
+```
+
+**⚠️ Important**: When auto-configuration is disabled:
+- You're responsible for using the correct API endpoint format
+- Radius units (km vs nautical miles) must be handled manually
+- API compatibility and authentication headers are your responsibility
+- The addon will use your exact `api_url` and `radius` settings without modification
+
+**Recommendation**: Keep auto-configuration enabled unless you have specific custom requirements.
+
 ## MQTT Topics
 
 ### Summary Data

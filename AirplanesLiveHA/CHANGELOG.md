@@ -160,4 +160,11 @@
  - **FIXED**: Critical bug where REST API was using wrong URL format causing 403 errors
  - **FIXED**: Variable scope error in logging when no aircraft data available
  - **IMPROVED**: Better error handling for 403 Forbidden responses with helpful messages
- - **ENHANCED**: Proper auto-configuration of API URLs based on selected type 
+ - **ENHANCED**: Proper auto-configuration of API URLs based on selected type
+
+ Version 1.4.12 Changes:
+ - **NEW**: Added option to disable auto-configuration for advanced users
+ - **NEW**: Added `disable_auto_config` configuration option
+ - **IMPROVED**: Better logging for auto-configuration status
+ - **ENHANCED**: Comprehensive documentation of auto-configuration behavior
+ - **DOCS**: Added detailed auto-configuration section to DOCS.md 

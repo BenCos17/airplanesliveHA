@@ -54,6 +54,7 @@ log(f"Raw config loaded: {config}")
 # Load config from options.json with fallback defaults
 API_TYPE = config.get("api_type", "free")
 API_KEY = config.get("api_key", "")
+DISABLE_AUTO_CONFIG = config.get("disable_auto_config", False)
 LATITUDE = config.get("latitude", "53.2707")
 LONGITUDE = config.get("longitude", "-9.0568")
 RADIUS = config.get("radius", 50)
@@ -65,15 +66,24 @@ MQTT_USERNAME = config.get("mqtt_username", "")
 MQTT_PASSWORD = config.get("mqtt_password", "")
 TRACKING_MODE = config.get("tracking_mode", "summary")
 
-# Auto-configure API URL based on type
-if API_TYPE == "authenticated":
-    API_URL = "https://rest.api.airplanes.live"
-    # Convert radius from km to nautical miles for REST API
-    RADIUS_NMI = RADIUS * 0.539957
-else:
-    # Free API uses kilometers
-    API_URL = "https://api.airplanes.live/v2/point"
+# Auto-configure API URL based on type (unless disabled)
+if DISABLE_AUTO_CONFIG:
+    # Use user-provided URL and radius as-is
+    API_URL = config.get("api_url", "https://api.airplanes.live/v2/point")
     RADIUS_NMI = RADIUS
+    log("Auto-configuration disabled - using user-provided settings")
+else:
+    # Auto-configure based on API type
+    if API_TYPE == "authenticated":
+        API_URL = "https://rest.api.airplanes.live"
+        # Convert radius from km to nautical miles for REST API
+        RADIUS_NMI = RADIUS * 0.539957
+        log("Auto-configured for REST API with radius conversion")
+    else:
+        # Free API uses kilometers
+        API_URL = "https://api.airplanes.live/v2/point"
+        RADIUS_NMI = RADIUS
+        log("Auto-configured for free API")
 
 log(f"Configuration loaded: API_TYPE={API_TYPE}, API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}km ({RADIUS_NMI:.1f}nm)")
 log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}, Tracking Mode: {TRACKING_MODE}")
@@ -235,7 +245,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
-                "sw_version": "1.4.11"
+                "sw_version": "1.4.12"
             }
         }
         if sensor["unit"]:

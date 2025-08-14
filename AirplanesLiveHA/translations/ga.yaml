@@ -1,4 +1,3 @@
-@ -0,0 +1,75 @@
 configuration:
   update_interval:
     name: "Tréimhse Nuashonraithe"
@@ -18,9 +17,18 @@ configuration:
   mqtt_password:
     name: "Pasfhocal MQTT"
     description: "Pasfhocal chun fíordheimhniú broicéara MQTT"
+  api_type:
+    name: "Cineál API"
+    description: "Roghnaigh idir API beathaitheoir bunúsach nó API REST le heochair"
   api_url:
     name: "URL API"
     description: "URL bunúsach d'API Airplanes.Live"
+  api_key:
+    name: "Eochair API"
+    description: "Do eochair API airplanes.live chun rochtain fhíordheimhnithe"
+  disable_auto_config:
+    name: "Díchumasaigh Auto-Cumrú"
+    description: "Nuair a chumasaítear é, úsáideann sé do api_url agus suíomhanna ga beacht"
   latitude:
     name: "Domhanleithead"
     description: "Domhanleithead lárnach don limistéar monatóireachta"
@@ -29,7 +37,10 @@ configuration:
     description: "Domhanfhad lárnach don limistéar monatóireachta"
   radius:
     name: "Ga"
-    description: "Ga i gciliméadair timpeall an phointe lárnaigh le monatóireacht" 
+    description: "Ga i gciliméadair timpeall an phointe lárnaigh le monatóireacht"
+  tracking_mode:
+    name: "Mód Rianúcháin"
+    description: "Roghnaigh idir staitisticí achoimre amháin, rianúchán mionsonraithe eitleáin aonair, nó an dá cheann"
 
 options:
   update_interval: "Tréimhse Nuashonraithe (soicindí)"
@@ -69,7 +80,7 @@ options_description:
 tracking_mode_options:
   summary: "Achoimre Amháin - Soláthraíonn staitisticí comhaireamh, eitleán is gaire, is airde, agus is tapúla"
   detailed: "Rianúchán Mionsonraithe - Cruthaíonn eintitis aonair do gach eitleán"
-  both: "An Dá Cheann - Soláthraíonn staitisticí achoimre agus rianúchán mionsonraithe" 
+  both: "An Dá Cheann - Soláthraíonn staitisticí achoimre agus rianúchán mionsonraithe"
 
 api_type_options:
   unauthenticated: "API Beathaitheoir Bunúsach - Sonraí eitleáin bunúsacha (teastaíonn ranníocaíocht sonraí chuig airplanes.live)"

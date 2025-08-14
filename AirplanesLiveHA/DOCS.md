@@ -1,7 +1,9 @@
 # Airplanes Live API Add-on Documentation
 
 ## Overview
-The Airplanes Live API Add-on integrates with [airplanes.live](https://airplanes.live) to provide real-time aircraft tracking data in Home Assistant via MQTT. Supports both the free feeder API and the authenticated REST API for premium features.
+The Airplanes Live API Add-on integrates with [airplanes.live](https://airplanes.live) to provide real-time aircraft tracking data in Home Assistant via MQTT. **Supports both the basic feeder API and the key-based REST API, but airplanes.live is transitioning to a stricter access model.** 
+
+**⚠️ Policy Change Notice**: Airplanes.live has announced a shift to a "feeder access and request access model" due to abuse and commercial use policy violations. The basic feeder API will likely be removed in the future, requiring all users to use the authenticated REST API.
 
 ## Features
 
@@ -38,31 +40,35 @@ The Airplanes Live API Add-on integrates with [airplanes.live](https://airplanes
 - **MQTT Port**: MQTT broker port
 - **MQTT Topic**: Base MQTT topic
 - **MQTT Username/Password**: Authentication (optional)
-- **API Type**: Choose between "feeder" (free) or "authenticated" (REST API)
+- **API Type**: Choose between "unauthenticated" (basic feeder) or "authenticated" (key-based REST API, also requires feeding)
 - **API Key**: Your airplanes.live API key for authenticated access
 - **Tracking Mode**: summary, detailed, or both
 
 ## API Types
 
-### Feeder API (feeder)
+### Feeder API (unauthenticated)
 - **Endpoint**: `https://api.airplanes.live/v2/point`
 - **Features**: Basic aircraft data, position tracking
 - **Limitations**: Basic filtering, limited data fields
 - **Radius**: Uses kilometers
+- **Requirements**: Must contribute data to airplanes.live
+- **Access**: Will be deprecated in favor of authenticated REST API
 
-### Authenticated REST API (feeder key based)
+### Key-based REST API (authenticated)
 - **Endpoint**: `https://rest.api.airplanes.live`
 - **Features**: Advanced filtering, comprehensive data, military aircraft
-- **Requirements**: API key from airplanes.live
+- **Requirements**: API key from airplanes.live + must be a feeder + request access approval
 - **Radius**: Automatically converts km to nautical miles
 - **Advanced Filters**: Altitude ranges, aircraft types, military, PIA, LADD
+- **Rate Limit**: 1 request per second
+- **Access**: Requires approval and API key from airplanes.live
 
 ## Auto-Configuration
 
 The addon automatically configures the correct API URL and radius format based on your `api_type` setting:
 
 ### Default Behavior
-- **Free API**: Automatically uses `https://api.airplanes.live/v2/point` with kilometer radius
+- **Feeder API**: Automatically uses `https://api.airplanes.live/v2/point` with kilometer radius
 - **REST API**: Automatically uses `https://rest.api.airplanes.live` with nautical mile radius conversion
 
 This prevents common configuration errors and ensures API compatibility.
@@ -138,14 +144,34 @@ The addon processes these fields from airplanes.live API:
 ### Position Filters
 - `&filter_with_pos` - Only aircraft with valid position data
 
+## Getting API Access
+
+**⚠️ Policy Change Notice**: Airplanes.live has announced stricter access requirements and will likely require all users to use the authenticated REST API in the future.
+
+### Step 1: Request Access
+1. **Contact Support**: Send a short description of your use case to [Airplanes.Live Support](https://airplanes.live/api-guide/)
+2. **Join Discord**: Feel free to contact them in the [Airplanes.Live Discord](https://airplanes.live/api-guide/)
+3. **Wait for Approval**: They will review your use case and grant access
+
+### Step 2: Become a Data Feeder
+- **Required**: You must contribute ADS-B data to airplanes.live
+- **Setup**: Follow their [feeder setup guide](https://airplanes.live/api-guide/)
+- **Hardware**: ADS-B receiver (RTL-SDR, FlightAware Pro Stick, etc.)
+
+### Step 3: Get API Key (Optional)
+- **For REST API**: Request an API key after feeder approval
+- **For Basic API**: No key needed, just feeder status
+
 ## Installation
 
-1. Add the repository to Home Assistant
-2. Install "Airplanes Live API" addon
-3. Configure your location and preferences
-4. Choose API type (feeder or authenticated)
-5. Add API key if using authenticated mode
-6. Start the addon
+1. **Get API access approval** from airplanes.live (see above)
+2. **Set up data feeding** to airplanes.live (required for both API types)
+3. Add the repository to Home Assistant
+4. Install "Airplanes Live API" addon
+5. Configure your location and preferences
+6. Choose API type (basic feeder or key-based REST API)
+7. Add API key if using authenticated mode
+8. Start the addon
 
 ## Troubleshooting
 
@@ -154,6 +180,8 @@ The addon processes these fields from airplanes.live API:
 - **MQTT connection issues**: Verify broker settings
 - **Entity naming conflicts**: Ensure clean configuration
 - **API key errors**: Verify API key and type selection
+- **403 Forbidden errors**: Check if you have API access approval from airplanes.live
+- **No data from API**: Verify you're an active data feeder to airplanes.live
 
 ### Log Analysis
 - Check addon logs for detailed information

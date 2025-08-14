@@ -52,7 +52,7 @@ config = load_config()
 log(f"Raw config loaded: {config}")
 
 # Load config from options.json with fallback defaults
-API_TYPE = config.get("api_type", "free")
+API_TYPE = config.get("api_type", "unauthenticated")
 API_KEY = config.get("api_key", "")
 DISABLE_AUTO_CONFIG = config.get("disable_auto_config", False)
 LATITUDE = config.get("latitude", "53.2707")
@@ -80,10 +80,10 @@ else:
         RADIUS_NMI = RADIUS * 0.539957
         log("Auto-configured for REST API with radius conversion")
     else:
-        # Free API uses kilometers
+        # Feeder API uses kilometers
         API_URL = "https://api.airplanes.live/v2/point"
         RADIUS_NMI = RADIUS
-        log("Auto-configured for free API")
+        log("Auto-configured for feeder API")
 
 log(f"Configuration loaded: API_TYPE={API_TYPE}, API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}km ({RADIUS_NMI:.1f}nm)")
 log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}, Tracking Mode: {TRACKING_MODE}")
@@ -131,7 +131,7 @@ def fetch_airplane_data() -> Optional[List[Dict[str, Any]]]:
         if API_KEY:
             headers["auth"] = API_KEY
     else:
-        # Free API
+        # Feeder API
         url = f"{API_URL}/{LATITUDE}/{LONGITUDE}/{RADIUS}"
         headers = {}
     
@@ -160,7 +160,7 @@ def fetch_airplane_data() -> Optional[List[Dict[str, Any]]]:
     except requests.exceptions.HTTPError as e:
         log(f"API HTTP error: {e}", "error")
         if "403" in str(e):
-            log("403 Forbidden - Check your API key or switch to non authenticated API", "error")
+            log("403 Forbidden - Check your API key or switch to feeder API", "error")
         return None
     except json.JSONDecodeError as e:
         log(f"Failed to parse API response: {e}", "error")
@@ -245,7 +245,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
-                "sw_version": "1.4.12"
+                "sw_version": "1.4.16"
             }
         }
         if sensor["unit"]:

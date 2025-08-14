@@ -167,4 +167,31 @@
  - **NEW**: Added `disable_auto_config` configuration option
  - **IMPROVED**: Better logging for auto-configuration status
  - **ENHANCED**: Comprehensive documentation of auto-configuration behavior
- - **DOCS**: Added detailed auto-configuration section to DOCS.md 
+ - **DOCS**: Added detailed auto-configuration section to DOCS.md
+
+ Version 1.4.13 Changes:
+ - **IMPROVED**: Changed API type terminology from "free" to "unauthenticated" for accuracy
+ - **IMPROVED**: Changed "authenticated" to "key-based REST API" for clarity
+ - **ENHANCED**: Updated all documentation to reflect correct terminology
+ - **DOCS**: Clarified that feeder API requires data contribution to airplanes.live
+ - **TRANSLATIONS**: Updated English translations with more accurate descriptions
+
+ Version 1.4.14 Changes:
+ - **CLARIFIED**: Both API types require data contribution to airplanes.live
+ - **IMPROVED**: Updated documentation to emphasize feeder requirement for all users
+ - **ENHANCED**: Better descriptions in translations and example configs
+ - **DOCS**: Added clear notes about data contribution requirements throughout
+
+ Version 1.4.15 Changes:
+ - **UPDATED**: Documentation to reflect airplanes.live's new "feeder access and request access model"
+ - **NEW**: Added comprehensive "Getting API Access" section with step-by-step instructions
+ - **ENHANCED**: Updated requirements to include access approval from airplanes.live support
+ - **IMPROVED**: Added troubleshooting for 403 errors and access issues
+ - **DOCS**: Added official airplanes.live API guide links and contact information
+
+
+ Version 1.4.16 Changes:
+ - **UPDATED**: Documentation to assume basic feeder API will be deprecated in the future
+ - **IMPROVED**: Clearer messaging about future authentication requirements
+ - **DOCS**: More forward-looking documentation about API access changes 
+ - **UPDATED**: Documentation to assume basic feeder API will be deprecated in the future

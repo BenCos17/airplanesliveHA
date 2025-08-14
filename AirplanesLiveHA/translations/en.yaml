@@ -56,7 +56,7 @@ options_description:
   mqtt_topic: "Base topic for MQTT messages"
   mqtt_username: "MQTT authentication username (optional)"
   mqtt_password: "MQTT authentication password (optional)"
-  api_type: "Choose between free API or authenticated REST API with API key"
+  api_type: "Choose between basic feeder API or key-based REST API (both require data contribution)"
   api_url: "airplanes.live API endpoint (auto-configured based on API type)"
   api_key: "Your airplanes.live API key for authenticated access (optional)"
   disable_auto_config: "When enabled, uses your exact api_url and radius settings without automatic conversion"
@@ -71,5 +71,5 @@ tracking_mode_options:
   both: "Both - Provides both summary statistics and detailed tracking" 
 
 api_type_options:
-  free: "Free API - Basic aircraft data with limited filtering"
-  authenticated: "Authenticated REST API - Advanced filtering and more data" 
+  unauthenticated: "Basic Feeder API - Basic aircraft data (requires data contribution to airplanes.live)"
+  authenticated: "Key-based REST API - Advanced filtering and more data with API key (also requires data contribution)" 

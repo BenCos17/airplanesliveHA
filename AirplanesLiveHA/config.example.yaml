@@ -15,7 +15,10 @@ mqtt_username: ""                     # MQTT username (optional)
 mqtt_password: ""                     # MQTT password (optional)
 
 # API Configuration
-api_type: free                        # API type: "free" or "authenticated"
+# ⚠️ POLICY CHANGE: Airplanes.live is transitioning to stricter access requirements
+# Note: Basic feeder API will be deprecated in favor of authenticated REST API at some point in the future
+# Contact: https://airplanes.live/api-guide/
+api_type: unauthenticated             # API type: "unauthenticated" or "authenticated"
 api_url: "https://api.airplanes.live/v2/point"  # API endpoint (auto-configured)
 api_key: ""                           # Your airplanes.live API key (optional)
 disable_auto_config: false            # Set to true to use exact api_url and radius settings
@@ -38,7 +41,7 @@ tracking_mode: summary
 # For comprehensive monitoring:
 # tracking_mode: both
 
-# For authenticated REST API access:
+# For key-based REST API access (also requires data contribution):
 # api_type: authenticated
 # api_key: "your-api-key-here"
 

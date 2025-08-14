@@ -134,3 +134,8 @@
  - **NEW**: Added Weather Conditions sensor showing wind and temperature data
  - **IMPROVED**: Better speed data processing with fallback to multiple speed fields
  - **ENHANCED**: Summary mode now shows 8 sensors with comprehensive aircraft data
+
+ Version 1.4.7 Changes:
+ - **FIXED**: Duplicate entity naming issue (e.g., "airplanes_live_airplanes_live_aircraft_types")
+ - **IMPROVED**: Cleaner entity names without redundant prefixes
+ - **ENHANCED**: Better organization and easier identification of sensors in Home Assistant

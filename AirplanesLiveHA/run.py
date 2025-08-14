@@ -202,7 +202,7 @@ def publish_discovery(client):
     for sensor in sensors:
         discovery_topic = f"homeassistant/sensor/airplanes_live_{sensor['key']}/config"
         payload = {
-            "name": f"Airplanes Live {sensor['name']}",
+            "name": sensor['name'],  # Remove the "Airplanes Live" prefix to avoid duplication
             "state_topic": f"{MQTT_TOPIC}/summary",
             "unique_id": f"airplanes_live_{sensor['key']}",
             "value_template": sensor["value_template"],
@@ -211,7 +211,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "airplanes.live",
                 "model": "Aircraft Tracker",
-                "sw_version": "1.4.6"
+                "sw_version": "1.4.7"
             }
         }
         if sensor["unit"]:

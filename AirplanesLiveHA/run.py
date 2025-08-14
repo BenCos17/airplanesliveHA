@@ -209,9 +209,9 @@ def publish_discovery(client):
             "device": {
                 "identifiers": ["airplanes_live_device"],
                 "name": "Airplanes Live",
-                "manufacturer": "airplanes.live",
-                "model": "Aircraft Tracker",
-                "sw_version": "1.4.7"
+                "manufacturer": "BenCos17",
+                "model": "Aircraft Tracker (Powered by airplanes.live)",
+                "sw_version": "1.4.8"
             }
         }
         if sensor["unit"]:

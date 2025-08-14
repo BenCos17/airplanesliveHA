@@ -139,3 +139,6 @@
  - **FIXED**: Duplicate entity naming issue (e.g., "airplanes_live_airplanes_live_aircraft_types")
  - **IMPROVED**: Cleaner entity names without redundant prefixes
  - **ENHANCED**: Better organization and easier identification of sensors in Home Assistant
+
+ Version 1.4.8 Changes:
+ - **CHANGED**: Manufacturer from "airplanes.live" to "BenCos17" in device information to make it more clear it's not offical, add note about being powered by airplanes.live in also 

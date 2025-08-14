@@ -280,7 +280,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
-                "sw_version": "1.4.22"
+                "sw_version": "1.4.23"
             }
         }
         if sensor["unit"]:
@@ -567,7 +567,7 @@ def on_disconnect(client, userdata, rc, properties=None):
     log(f"Disconnected from MQTT broker with reason code: {rc}", "warning")
 
 def main():
-    log("Starting Airplanes Live Home Assistant Add-on v1.4.22")
+    log("Starting Airplanes Live Home Assistant Add-on v1.4.23")
     
     # Validate configuration first
     if not validate_config():

@@ -213,6 +213,12 @@
  - **ENHANCED**: Robust logging that won't crash on missing data fields
  - **TECHNICAL**: Added comprehensive debugging for API response structure and summary payload creation
 
+ Version 1.4.23 Changes:
+ - **FIXED**: Made api_key optional in configuration schema to prevent validation errors
+ - **FIXED**: Configuration validation now properly handles missing api_key for unauthenticated API type
+ - **IMPROVED**: Better schema validation for optional API key field
+ - **ENHANCED**: Users can now save configuration without api_key when using feeder API
+
  Version 1.4.22 Changes:
  - **FIXED**: API response field mapping from 'ac' to 'aircraft' for REST API compatibility
  - **NEW**: Added backward compatibility for legacy 'ac' field format (feeder API)

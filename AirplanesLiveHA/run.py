@@ -245,7 +245,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
-                "sw_version": "1.4.16"
+                "sw_version": "1.4.17"
             }
         }
         if sensor["unit"]:
@@ -326,7 +326,7 @@ def publish_summary_data(client, aircraft_list):
                 "highest": 0,
                 "fastest_ground": 0,
                 "fastest_air": 0,
-                "last_update": datetime.now().isoformat()
+                "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         else:
             # Process aircraft data
@@ -459,7 +459,7 @@ def publish_summary_data(client, aircraft_list):
                 "fastest_air": fastest_air,
                 "aircraft_types": ", ".join(aircraft_types) if aircraft_types else "Unknown",
                 "weather": weather_info,
-                "last_update": datetime.now().isoformat()
+                "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         
         # Publish summary data
@@ -554,7 +554,7 @@ def main():
                 "fastest_air": 0,
                 "aircraft_types": "None",
                 "weather": "Unknown",
-                "last_update": datetime.now().isoformat()
+                "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
             client.publish(f"{MQTT_TOPIC}/summary", json.dumps(initial_data), retain=True)
             log("Initial data published")

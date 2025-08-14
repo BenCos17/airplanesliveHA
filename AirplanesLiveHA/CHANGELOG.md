@@ -193,5 +193,7 @@
  Version 1.4.16 Changes:
  - **UPDATED**: Documentation to assume basic feeder API will be deprecated in the future
  - **IMPROVED**: Clearer messaging about future authentication requirements
- - **DOCS**: More forward-looking documentation about API access changes 
- - **UPDATED**: Documentation to assume basic feeder API will be deprecated in the future
+
+ Version 1.4.17 Changes:
+ - **FIXED**: Last Update sensor now shows human-readable date format instead of ISO timestamp
+ - **IMPROVED**: Changed from "2025-08-14T23:17:29.367421" to "2025-08-14 23:17:29"

@@ -22,16 +22,9 @@ COPY run.py .
 # Copy s6 service files
 COPY rootfs/ /
 
-# Set permissions
+# Set permissions for s6 services
 RUN chmod a+x /etc/services.d/airplanes_live_api/run && \
     chmod a+x /etc/services.d/airplanes_live_api/finish
-
-# Create non-root user for better security
-RUN adduser -D -s /bin/sh -u 1000 airplanes && \
-    chown -R airplanes:airplanes /app
-
-# Switch to non-root user
-USER airplanes
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

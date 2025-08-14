@@ -113,3 +113,8 @@
  - **FIXED**: Schema validation errors preventing addon from loading in Home Assistant
  - **FIXED**: Invalid 'select' type and 'tracking_mode_options' array in config.yaml
  - **IMPROVED**: Changed tracking_mode to use 'str' type for better Home Assistant compatibility
+
+ Version 1.4.3 Changes:
+ - **FIXED**: Docker container permission issues with s6-overlay-suexec
+ - **FIXED**: "unable to setgid to root: Operation not permitted" error
+ - **IMPROVED**: Simplified Dockerfile user management for better compatibility

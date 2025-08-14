@@ -146,22 +146,34 @@ def fetch_airplane_data() -> Optional[List[Dict[str, Any]]]:
         log(f"API response type: {type(data)}")
         if isinstance(data, dict):
             log(f"API response keys: {list(data.keys())}")
-            if 'ac' in data:
+            if 'aircraft' in data:
+                log(f"API response 'aircraft' type: {type(data['aircraft'])}")
+            elif 'ac' in data:
                 log(f"API response 'ac' type: {type(data['ac'])}")
         
         # Extract aircraft array from response
         if isinstance(data, dict):
-            if 'ac' in data:
-                aircraft_list = data['ac']
+            if 'aircraft' in data:
+                aircraft_list = data['aircraft']
                 if isinstance(aircraft_list, list):
                     count = len(aircraft_list)
                     log(f"Fetched {count} aircraft using {API_TYPE} API")
                     return aircraft_list
                 else:
+                    log(f"API response 'aircraft' field is not a list: {type(aircraft_list)}", "warning")
+                    return None
+            elif 'ac' in data:
+                # Fallback for older API format
+                aircraft_list = data['ac']
+                if isinstance(aircraft_list, list):
+                    count = len(aircraft_list)
+                    log(f"Fetched {count} aircraft using {API_TYPE} API (legacy format)")
+                    return aircraft_list
+                else:
                     log(f"API response 'ac' field is not a list: {type(aircraft_list)}", "warning")
                     return None
             else:
-                log(f"API response missing 'ac' field. Available keys: {list(data.keys())}", "warning")
+                log(f"API response missing 'aircraft' or 'ac' field. Available keys: {list(data.keys())}", "warning")
                 return None
         else:
             log(f"API response is not a dictionary: {type(data)}", "warning")
@@ -268,7 +280,7 @@ def publish_discovery(client):
                 "name": "Airplanes Live",
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
-                "sw_version": "1.4.21"
+                "sw_version": "1.4.22"
             }
         }
         if sensor["unit"]:
@@ -555,7 +567,7 @@ def on_disconnect(client, userdata, rc, properties=None):
     log(f"Disconnected from MQTT broker with reason code: {rc}", "warning")
 
 def main():
-    log("Starting Airplanes Live Home Assistant Add-on v1.4.0")
+    log("Starting Airplanes Live Home Assistant Add-on v1.4.22")
     
     # Validate configuration first
     if not validate_config():

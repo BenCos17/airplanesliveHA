@@ -1,0 +1,75 @@
+configuration:
+  update_interval:
+    name: "Update Interval"
+    description: "How often to fetch new airplane data (in seconds)"
+  mqtt_broker:
+    name: "MQTT"
+    description: "MQTT broker hostname or IP address"
+  mqtt_port:
+    name: "MQTT Port"
+    description: "MQTT broker port number"
+  mqtt_topic:
+    name: "MQTT Topic"
+    description: "Base MQTT topic for publishing airplane data"
+  mqtt_username:
+    name: "MQTT Username"
+    description: "Username for MQTT broker authentication"
+  mqtt_password:
+    name: "MQTT Password"
+    description: "Password for MQTT broker authentication"
+  api_url:
+    name: "API URL"
+    description: "Base URL for the Airplanes.Live API"
+  latitude:
+    name: "Latitude"
+    description: "Center latitude for the monitoring area"
+  longitude:
+    name: "Longitude"
+    description: "Center longitude for the monitoring area"
+  radius:
+    name: "Radius"
+    description: "Radius in kilometers around the center point to monitor" 
+
+options:
+  update_interval: "Update Interval (seconds)"
+  mqtt_broker: "MQTT Broker"
+  mqtt_port: "MQTT Port"
+  mqtt_topic: "MQTT Topic"
+  mqtt_username: "MQTT Username"
+  mqtt_password: "MQTT Password"
+  api_type: "API Type"
+  api_url: "API URL"
+  api_key: "API Key"
+  disable_auto_config: "Disable Auto-Config"
+  latitude: "Latitude"
+  longitude: "Longitude"
+  radius: "Radius (km)"
+  tracking_mode: "Tracking Mode"
+  tracking_mode_summary: "Summary Only"
+  tracking_mode_detailed: "Detailed Tracking"
+  tracking_mode_both: "Both Summary and Detailed"
+
+options_description:
+  update_interval: "How often to fetch new data from the API"
+  mqtt_broker: "MQTT broker address (usually core-mosquitto)"
+  mqtt_port: "MQTT broker port (usually 1883)"
+  mqtt_topic: "Base topic for MQTT messages"
+  mqtt_username: "MQTT authentication username (optional)"
+  mqtt_password: "MQTT authentication password (optional)"
+  api_type: "Choose between basic feeder API or key-based REST API (both require data contribution)"
+  api_url: "airplanes.live API endpoint (auto-configured based on API type)"
+  api_key: "Your airplanes.live API key for authenticated access (optional)"
+  disable_auto_config: "When enabled, uses your exact api_url and radius settings without automatic conversion"
+  latitude: "Your location's latitude (-90 to 90)"
+  longitude: "Your location's longitude (-180 to 180)"
+  radius: "Search radius in kilometers"
+  tracking_mode: "Choose between summary statistics only, detailed individual aircraft tracking, or both"
+
+tracking_mode_options:
+  summary: "Summary Only - Provides count, closest, highest, and fastest aircraft statistics"
+  detailed: "Detailed Tracking - Creates individual entities for each aircraft"
+  both: "Both - Provides both summary statistics and detailed tracking" 
+
+api_type_options:
+  unauthenticated: "Basic Feeder API - Basic aircraft data (requires data contribution to airplanes.live)"
+  authenticated: "Key-based REST API - Advanced filtering and more data with API key (also requires data contribution)" 

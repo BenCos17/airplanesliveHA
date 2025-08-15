@@ -1,9 +1,9 @@
 configuration:
   update_interval:
-    name: "Update Interval"
+    name: "Aktualisierungsintervall"
     description: "How often to fetch new airplane data (in seconds)"
   mqtt_broker:
-    name: "MQTT"
+    name: "MQTT Broker"
     description: "MQTT broker hostname or IP address"
   mqtt_port:
     name: "MQTT Port"

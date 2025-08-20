@@ -1,0 +1,62 @@
+# Example configuration for Airplanes Live API Add-on
+# Copy this file to your Home Assistant configuration and modify as needed
+
+# Basic Configuration
+update_interval: 10                    # How often to fetch data (seconds)
+latitude: 53.2707                     # Your location latitude (-90 to 90)
+longitude: -9.0568                    # Your location longitude (-180 to 180)
+radius: 50                            # Search radius in kilometers
+
+# MQTT Configuration
+mqtt_broker: core-mosquitto           # MQTT broker address
+mqtt_port: 1883                       # MQTT broker port
+mqtt_topic: airplanes/live            # Base MQTT topic
+mqtt_username: ""                     # MQTT username (optional)
+mqtt_password: ""                     # MQTT password (optional)
+
+# API Configuration
+# ⚠️ POLICY CHANGE: Airplanes.live is transitioning to stricter access requirements
+# Note: Basic feeder API will be deprecated in favor of authenticated REST API at some point in the future
+# Contact: https://airplanes.live/api-guide/
+api_type: unauthenticated             # API type: "unauthenticated" or "authenticated"
+api_url: "https://api.airplanes.live/v2/point"  # API endpoint (auto-configured)
+api_key: ""                           # Your airplanes.live API key (optional)
+disable_auto_config: false            # Set to true to use exact api_url and radius settings
+
+# Tracking Mode
+# Options: "summary", "detailed", "both"
+# - summary: Only summary statistics (count, closest, highest, fastest)
+# - detailed: Individual aircraft tracking with separate entities
+# - both: Both summary and detailed tracking
+tracking_mode: summary
+
+# Example configurations for different use cases:
+
+# For basic monitoring (summary only):
+# tracking_mode: summary
+
+# For detailed aircraft tracking:
+# tracking_mode: detailed
+
+# For comprehensive monitoring:
+# tracking_mode: both
+
+# For key-based REST API access (also requires data contribution):
+# api_type: authenticated
+# api_key: "your-api-key-here"
+
+# Example for different locations:
+# New York City:
+# latitude: 40.7128
+# longitude: -74.0060
+# radius: 100
+
+# London:
+# latitude: 51.5074
+# longitude: -0.1278
+# radius: 75
+
+# Tokyo:
+# latitude: 35.6762
+# longitude: 139.6503
+# radius: 80

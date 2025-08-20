@@ -1,4 +1,4 @@
 # https://developers.home-assistant.io/docs/add-ons/repository#repository-configuration
 name: AirplanesLiveHA repository
-url: 'https://github.com/BenCos17/airplanesliveHA/'
-maintainer: Awesome Maintainer <mail@jarvisdiscordbot.net>
+url: 'https://github.com/BenCos17/airplanesliveHA'
+maintainer: BenCos17 <mail@jarvisdiscordbot.net>

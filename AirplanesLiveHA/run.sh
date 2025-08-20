@@ -1,11 +1,9 @@
-#!/usr/bin/with-contenv bashio
+#!/bin/bash
 
 echo "Starting Airplanes Live Home Assistant Add-on"
 
-# Start the Flask web server in the background
-echo "Starting Flask web server..."
+# Start the web interface in the background
 python3 /app/app.py &
 
-# Start the main application that handles MQTT and API calls
-echo "Starting MQTT service..."
+# Start the MQTT service in the foreground
 python3 /app/run.py

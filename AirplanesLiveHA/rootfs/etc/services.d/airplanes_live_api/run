@@ -1,0 +1,10 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Start the Airplanes Live API MQTT service
+# s6-overlay docs: https://github.com/just-containers/s6-overlay
+# ==============================================================================
+
+bashio::log.info "Starting Airplanes Live API MQTT service"
+
+# Run the MQTT service
+exec python3 /app/run.py 

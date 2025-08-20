@@ -1,6 +1,6 @@
 configuration:
   update_interval:
-    name: "Update Interval"
+    name: "Aktualisierungsintervall"
     description: "How often to fetch new airplane data (in seconds)"
   mqtt_broker:
     name: "MQTT Broker"

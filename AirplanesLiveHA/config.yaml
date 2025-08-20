@@ -1,6 +1,6 @@
 name: "Airplanes Live API Add-on"
 description: "An add-on to track live airplane data and expose it as a Home Assistant entity via MQTT."
-version: "1.3.25"
+version: "1.4.27"
 slug: "airplanes_live_api"
 init: false
 arch:
@@ -11,12 +11,6 @@ arch:
   - i386
 startup: services
 url: "https://github.com/BenCos17/airplanesliveHA"
-webui: "http://[HOST]:[PORT:8000]/"
-watchdog: "http://[HOST]:[PORT:8000]/health"
-ports:
-  "8000/tcp": 8000
-ports_description:
-  "8000/tcp": "Web interface and API endpoint"
 image: "ghcr.io/bencos17/airplanes_live_api_{arch}"
 options:
   update_interval: 10
@@ -25,10 +19,14 @@ options:
   mqtt_topic: airplanes/live
   mqtt_username: ""
   mqtt_password: ""
+  api_type: unauthenticated
   api_url: "https://api.airplanes.live/v2/point"
+  api_key: ""
+  disable_auto_config: false
   latitude: 53.2707
   longitude: -9.0568
   radius: 50
+  tracking_mode: summary
 schema:
   update_interval: int
   mqtt_broker: str
@@ -36,7 +34,11 @@ schema:
   mqtt_topic: str
   mqtt_username: str
   mqtt_password: str
+  api_type: str
   api_url: str
+  api_key: str?
+  disable_auto_config: bool
   latitude: float
   longitude: float
   radius: int
+  tracking_mode: str

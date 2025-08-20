@@ -1,33 +1,59 @@
 # Airplanes Live API Add-on
 
-This Home Assistant add-on fetches live airplane tracking data from the [Airplanes.Live API](https://airplanes.live/api-guide/) and publishes it to an MQTT broker.
+This Home Assistant add-on fetches live airplane tracking data from the [Airplanes.Live API](https://airplanes.live/api-guide/) and publishes it to an MQTT broker for Home Assistant integration.
+
+## Features
+
+- **Real-time aircraft tracking** using the airplanes.live API
+- **MQTT integration** for Home Assistant entity discovery
+- **Configurable parameters** for location, radius, and update intervals
 
 ## Configuration
 
-Modify the `config.yaml` file with your settings:
+The add-on can be configured through the Home Assistant add-on interface with the following options:
 
-- `api_url`: Base URL for the Airplanes.Live API.
-- `latitude`, `longitude`, `radius`: The area to monitor.
-- `mqtt_broker`, `mqtt_topic`, `mqtt_username`, `mqtt_password`: MQTT settings.
+- `api_url`: Base URL for the Airplanes.Live API (default: https://api.airplanes.live/v2/point)
+- `latitude`, `longitude`, `radius`: The area to monitor (default: 53.2707, -9.0568, 50km)
+- `update_interval`: How often to fetch new data in seconds (default: 10)
+- `mqtt_broker`, `mqtt_port`, `mqtt_topic`: MQTT settings (default: core-mosquitto, 1883, airplanes/live)
+- `mqtt_username`, `mqtt_password`: MQTT authentication (optional)
 
 ## Installation
 
-1. Clone the repository.
-2. Modify `config.yaml` with your settings.
-3. Build and run the add-on in Home Assistant.
+1. Add this repository to your Home Assistant instance
+2. Install the "Airplanes Live API" add-on
+3. Configure your location and preferences
+4. Start the add-on
 
+## Usage
 
+### Home Assistant Integration
 
+Once running, the add-on automatically creates sensor entities in Home Assistant for each detected aircraft, including altitude, speed, track, flight number, aircraft type, and registration.
+
+### MQTT Topics
+
+The add-on publishes aircraft data to MQTT topics that Home Assistant can discover and integrate as entities.
+
+## Support
+
+For issues and feature requests, please visit the [GitHub repository](https://github.com/BenCos17/airplanesliveHA).
+
+## License
+
+This project is licensed under the MIT License.
+
+---
 
 Add-on documentation: <https://developers.home-assistant.io/docs/add-ons>
 
-[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Faddons-example)
+[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FBenCos17%2FairplanesliveHA)
 
 ## Add-ons
 
-This repository contains the following add-ons
+This repository contains the following add-on:
 
-### [Example add-on](./example)
+### [Airplanes Live API](./AirplanesLiveHA)
 
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]
@@ -35,26 +61,7 @@ This repository contains the following add-ons
 ![Supports armv7 Architecture][armv7-shield]
 ![Supports i386 Architecture][i386-shield]
 
-_WIP addon for https://airplanes.live._
-
-<!--
-
-Notes to developers after forking or using the github template feature:
-- While developing comment out the 'image' key from 'example/config.yaml' to make the supervisor build the addon
-  - Remember to put this back when pushing up your changes.
-- When you merge to the 'main' branch of your repository a new build will be triggered.
-  - Make sure you adjust the 'version' key in 'example/config.yaml' when you do that.
-  - Make sure you update 'example/CHANGELOG.md' when you do that.
-  - The first time this runs you might need to adjust the image configuration on github container registry to make it public
-  - You may also need to adjust the github Actions configuration (Settings > Actions > General > Workflow > Read & Write)
-- Adjust the 'image' key in 'example/config.yaml' so it points to your username instead of 'home-assistant'.
-  - This is where the build images will be published to.
-- Rename the example directory.
-  - The 'slug' key in 'example/config.yaml' should match the directory name.
-- Adjust all keys/url's that points to 'home-assistant' to now point to your user/fork.
-- Share your repository on the forums https://community.home-assistant.io/c/projects/9
-- Do awesome stuff!
- -->
+_Real-time aircraft tracking addon for https://airplanes.live._
 
 [aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg

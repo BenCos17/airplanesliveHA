@@ -26,6 +26,6 @@ COPY rootfs/ /
 RUN chmod a+x /etc/services.d/airplanes_live_api/run && \
     chmod a+x /etc/services.d/airplanes_live_api/finish
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD ps aux | grep run.py || exit 1
+# Health check: ensure Python process is running and supervised
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD pgrep -f "/app/run.py" >/dev/null || exit 1

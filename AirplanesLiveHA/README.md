@@ -64,11 +64,15 @@ This add-on integrates with the [airplanes.live](https://airplanes.live) API to 
 Once the add-on is running, it will automatically create sensor entities in Home Assistant based on your tracking mode selection:
 
 #### Summary Mode (Default)
-Creates a single device with 5 sensors:
+Creates a single device with these sensors:
 - **Aircraft Count**: Total number of aircraft in range
-- **Closest Aircraft**: Flight number and altitude of lowest aircraft
-- **Highest Aircraft**: Maximum altitude in feet
-- **Fastest Aircraft**: Maximum speed in knots
+- **Lowest Altitude Aircraft**: Flight and altitude of lowest aircraft
+- **Closest Distance Aircraft**: Flight and distance in km
+- **Highest Aircraft**: Flight and altitude in feet
+- **Fastest Aircraft (Ground)**: Highest ground speed in knots
+- **Fastest Aircraft (Air)**: Highest air speed in knots
+- **Aircraft Types**: Unique aircraft types currently in range
+- **Weather Conditions**: Wind and temperature summary
 - **Last Update**: Timestamp of last data update
 
 #### Detailed Mode

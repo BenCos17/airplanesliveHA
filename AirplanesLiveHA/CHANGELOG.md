@@ -262,3 +262,9 @@
  - **ENHANCED**: Better Home Assistant integration with improved discovery reliability
  - **TECHNICAL**: Automatic message processing from queue on reconnection
  - **TECHNICAL**: Enhanced logging for MQTT operations and connection states
+
+ Version 1.4.29 Changes:
+ - **CHANGED**: Exposed MQTT QoS and retain as configurable options in add-on config
+ - **FIXED**: Docker healthcheck now uses reliable process check
+ - **CLEANUP**: Removed obsolete run.sh (web app removed previously)
+ - **DOCS**: Updated sensors list and aligned documentation version

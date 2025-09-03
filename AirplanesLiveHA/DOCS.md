@@ -199,7 +199,7 @@ The addon processes these fields from airplanes.live API:
 
 ## Development
 
-- **Version**: 1.4.22
+- **Version**: 1.4.28
 - **Base Image**: ghcr.io/hassio-addons/base:14.0.0
 - **Architectures**: aarch64, amd64, armhf, armv7, i386
 - **License**: MIT

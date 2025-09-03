@@ -208,6 +208,8 @@ The addon processes these fields from airplanes.live API:
 ## Support
 
 - **GitHub**: [BenCos17/airplanesliveHA](https://github.com/BenCos17/airplanesliveHA)
+- **My Discord server**: [discord](https://discord.gg/WW4eNQj9qr)
+
 - **Issues**: Report bugs and feature requests on GitHub
 - **Documentation**: See README.md for detailed usage instructions
 - **API Documentation**: [airplanes.live REST API](https://airplanes.live/docs)

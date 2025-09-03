@@ -19,8 +19,6 @@ options:
   mqtt_topic: airplanes/live
   mqtt_username: ""
   mqtt_password: ""
-  mqtt_qos: 1
-  mqtt_retain: true
   api_type: unauthenticated
   api_url: "https://api.airplanes.live/v2/point"
   api_key: ""
@@ -36,8 +34,6 @@ schema:
   mqtt_topic: str
   mqtt_username: str
   mqtt_password: str
-  mqtt_qos: int
-  mqtt_retain: bool
   api_type: str
   api_url: str
   api_key: str?

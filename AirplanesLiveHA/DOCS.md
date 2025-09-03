@@ -212,7 +212,7 @@ The addon processes these fields from airplanes.live API:
 
 - **Issues**: Report bugs and feature requests on GitHub
 - **Documentation**: See README.md for detailed usage instructions
-- **API Documentation**: [airplanes.live REST API](https://airplanes.live/docs)
+- **API Documentation**: [airplanes.live REST API](https://airplanes.live/api-guide/)
 
 ---
 

@@ -8,6 +8,8 @@ import math
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 import yaml
+from queue import Queue
+import threading
 
 # Configure logging
 logging.basicConfig(
@@ -59,13 +61,13 @@ def get_addon_version():
         return version
     except FileNotFoundError:
         log(f"Config file {config_path} not found, using default version", "warning")
-        return "1.4.24"
+        return "1.4.28"
     except yaml.YAMLError as e:
         log(f"Error parsing config.yaml: {e}, using default version", "error")
-        return "1.4.24"
+        return "1.4.28"
     except Exception as e:
         log(f"Error loading version: {e}, using default version", "error")
-        return "1.4.24"
+        return "1.4.28"
 
 # Load configuration
 config = load_config()
@@ -85,6 +87,8 @@ MQTT_PORT = config.get("mqtt_port", 1883)
 MQTT_TOPIC = config.get("mqtt_topic", "airplanes/live")
 MQTT_USERNAME = config.get("mqtt_username", "")
 MQTT_PASSWORD = config.get("mqtt_password", "")
+MQTT_QOS = config.get("mqtt_qos", 1)  # Default to QoS 1 for reliability
+MQTT_RETAIN = config.get("mqtt_retain", True)  # Default to retain messages
 TRACKING_MODE = config.get("tracking_mode", "summary")
 
 # Auto-configure API URL based on type (unless disabled)
@@ -107,7 +111,7 @@ else:
         log("Auto-configured for feeder API")
 
 log(f"Configuration loaded: API_TYPE={API_TYPE}, API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}km ({RADIUS_NMI:.1f}nm)")
-log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}, Tracking Mode: {TRACKING_MODE}")
+log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}, QoS: {MQTT_QOS}, Retain: {MQTT_RETAIN}, Tracking Mode: {TRACKING_MODE}")
 
 def validate_config():
     """Validate configuration values"""
@@ -132,6 +136,14 @@ def validate_config():
     
     if not isinstance(UPDATE_INTERVAL, (int, float)) or UPDATE_INTERVAL < 1:
         errors.append(f"Invalid update interval: {UPDATE_INTERVAL} (must be >= 1)")
+    
+    # Validate MQTT QoS
+    if not isinstance(MQTT_QOS, int) or MQTT_QOS not in [0, 1, 2]:
+        errors.append(f"Invalid MQTT QoS: {MQTT_QOS} (must be 0, 1, or 2)")
+    
+    # Validate MQTT retain
+    if not isinstance(MQTT_RETAIN, bool):
+        errors.append(f"Invalid MQTT retain: {MQTT_RETAIN} (must be boolean)")
     
     if errors:
         for error in errors:
@@ -217,7 +229,7 @@ def fetch_airplane_data() -> Optional[List[Dict[str, Any]]]:
         log(f"Unexpected error fetching airplane data: {e}", "error")
         return None
 
-def publish_discovery(client):
+def publish_discovery(mqtt_manager):
     """Publish MQTT discovery for Home Assistant - single device with multiple sensors."""
     log("Starting MQTT discovery publishing...")
     
@@ -311,14 +323,14 @@ def publish_discovery(client):
         try:
             payload_json = json.dumps(payload)
             log(f"Publishing discovery to {discovery_topic}: {payload_json}")
-            client.publish(discovery_topic, payload_json, retain=True)
+            mqtt_manager.publish(discovery_topic, payload_json, retain=True)
             log(f"Published discovery for {sensor['name']}")
         except Exception as e:
             log(f"Error publishing discovery for {sensor['name']}: {e}", "error")
     
     log("Discovery publishing completed")
 
-def publish_individual_aircraft(client, aircraft_list):
+def publish_individual_aircraft(mqtt_manager, aircraft_list):
     """Publish individual aircraft data if tracking mode allows it"""
     if TRACKING_MODE not in ["detailed", "both"]:
         return
@@ -347,14 +359,12 @@ def publish_individual_aircraft(client, aircraft_list):
                 "last_seen": datetime.now().isoformat()
             }
             
-            client.publish(state_topic, json.dumps(state_payload), retain=True)
+            mqtt_manager.publish(state_topic, json.dumps(state_payload), retain=True)
             
             # Publish discovery for individual aircraft
             discovery_topic = f"homeassistant/sensor/airplane_{hex_code}_info/config"
             discovery_payload = {
                 "name": f"Aircraft {hex_code}",
-                "state_topic": state_topic,
-                "unique_id": f"airplane_{hex_code}_info",
                 "value_template": "{{ value_json.flight }}",
                 "device": {
                     "identifiers": [f"airplane_{hex_code}"],
@@ -365,12 +375,12 @@ def publish_individual_aircraft(client, aircraft_list):
                 }
             }
             
-            client.publish(discovery_topic, json.dumps(discovery_payload), retain=True)
+            mqtt_manager.publish(discovery_topic, json.dumps(discovery_payload), retain=True)
             
         except Exception as e:
             log(f"Error publishing individual aircraft {hex_code}: {e}", "error")
 
-def publish_summary_data(client, aircraft_list):
+def publish_summary_data(mqtt_manager, aircraft_list):
     """Publish summary data to MQTT with improved error handling"""
     try:
         if not aircraft_list or not isinstance(aircraft_list, list):
@@ -567,7 +577,7 @@ def publish_summary_data(client, aircraft_list):
         
         # Publish summary data
         summary_topic = f"{MQTT_TOPIC}/summary"
-        client.publish(summary_topic, json.dumps(summary_payload), retain=True)
+        mqtt_manager.publish(summary_topic, json.dumps(summary_payload), retain=True)
         
         log(f"Published summary: {summary_payload.get('count', 'N/A')} aircraft, lowest: {summary_payload.get('closest_lowest', 'N/A')}, closest: {summary_payload.get('closest_distance', 'N/A')}, highest: {summary_payload.get('highest', 'N/A')}ft, fastest ground: {summary_payload.get('fastest_ground', 'N/A')}kts, fastest air: {summary_payload.get('fastest_air', 'N/A')}kts, types: {summary_payload.get('aircraft_types', 'N/A')}, weather: {summary_payload.get('weather', 'N/A')}")
         
@@ -577,16 +587,270 @@ def publish_summary_data(client, aircraft_list):
         if aircraft_list:
             log(f"Aircraft data sample: {aircraft_list[:2]}", "error")
 
-def on_connect(client, userdata, flags, reasonCode, properties):
-    if reasonCode == 0:
-        log("Connected to MQTT broker successfully")
-    else:
-        log(f"Connected to MQTT broker with reason code: {reasonCode}", "warning")
-        if reasonCode == 5:
-            log("MQTT authentication failed - check username/password", "error")
+# MQTT Configuration and State
+class MQTTManager:
+    def __init__(self, broker: str, port: int, topic: str, username: str = "", password: str = ""):
+        self.broker = broker
+        self.port = port
+        self.topic = topic
+        self.username = username
+        self.password = password
+        self.client = None
+        self.connected = False
+        self.reconnect_delay = 1
+        self.max_reconnect_delay = 300  # 5 minutes
+        self.message_queue = Queue()
+        self.last_heartbeat = 0
+        self.heartbeat_interval = 30  # seconds
+        self.connection_lock = threading.Lock()
+        self.qos = 1
+        self.retain = True
+        
+    def create_client(self):
+        """Create and configure MQTT client"""
+        self.client = mqtt.Client(protocol=mqtt.MQTTv5)
+        
+        # Set callbacks
+        self.client.on_connect = self._on_connect
+        self.client.on_disconnect = self._on_disconnect
+        self.client.on_publish = self._on_publish
+        self.client.on_log = self._on_log
+        
+        # Configure authentication
+        if self.username and self.password:
+            self.client.username_pw_set(self.username, self.password)
+            log("MQTT authentication configured")
+        else:
+            log("No MQTT credentials provided - attempting anonymous connection", "warning")
+        
+        # Set last will and testament
+        will_topic = f"{self.topic}/status"
+        will_payload = json.dumps({
+            "status": "offline",
+            "last_seen": datetime.now().isoformat(),
+            "reason": "unexpected_disconnect"
+        })
+        self.client.will_set(will_topic, will_payload, qos=1, retain=True)
+        
+        # Set connection parameters
+        self.client.reconnect_delay_set(min_delay=1, max_delay=300)
+        
+        return self.client
+    
+    def _on_connect(self, client, userdata, flags, reasonCode, properties):
+        """Handle MQTT connection events"""
+        if reasonCode == 0:
+            self.connected = True
+            self.reconnect_delay = 1  # Reset delay on successful connection
+            log("Connected to MQTT broker successfully")
+            
+            # Publish online status
+            self._publish_status("online", "startup")
+            
+            # Process queued messages
+            self._process_message_queue()
+            
+        else:
+            self.connected = False
+            log(f"Connected to MQTT broker with reason code: {reasonCode}", "warning")
+            if reasonCode == 5:
+                log("MQTT authentication failed - check username/password", "error")
+            elif reasonCode == 3:
+                log("MQTT broker unavailable - check if broker is running", "error")
+            elif reasonCode == 4:
+                log("MQTT bad username or password", "error")
+    
+    def _on_disconnect(self, client, userdata, rc, properties=None):
+        """Handle MQTT disconnection events"""
+        self.connected = False
+        log(f"Disconnected from MQTT broker with reason code: {rc}", "warning")
+        
+        if rc == 0:
+            log("Clean disconnect - shutting down")
+        elif rc == 1:
+            log("Unexpected disconnect - will attempt reconnection")
+        elif rc == 2:
+            log("Disconnect due to protocol error")
+        elif rc == 3:
+            log("Disconnect due to broker error")
+        elif rc == 4:
+            log("Disconnect due to authentication error")
+        elif rc == 5:
+            log("Disconnect due to authorization error")
+        else:
+            log(f"Disconnect with unknown reason code: {rc}")
+    
+    def _on_publish(self, client, userdata, mid):
+        """Handle successful message publish"""
+        log(f"Message published successfully (ID: {mid})", "debug")
+    
+    def _on_log(self, client, userdata, level, buf):
+        """Handle MQTT client logs"""
+        if level == mqtt.MQTT_LOG_ERR:
+            log(f"MQTT Error: {buf}", "error")
+        elif level == mqtt.MQTT_LOG_WARNING:
+            log(f"MQTT Warning: {buf}", "warning")
+        elif level == mqtt.MQTT_LOG_INFO:
+            log(f"MQTT Info: {buf}", "info")
+        else:
+            log(f"MQTT Debug: {buf}", "debug")
+    
+    def _publish_status(self, status: str, reason: str):
+        """Publish connection status"""
+        if not self.connected:
+            return
+            
+        status_topic = f"{self.topic}/status"
+        status_payload = json.dumps({
+            "status": status,
+            "last_seen": datetime.now().isoformat(),
+            "reason": reason,
+            "broker": f"{self.broker}:{self.port}"
+        })
+        
+        try:
+            self.client.publish(status_topic, status_payload, qos=1, retain=True)
+            log(f"Published status: {status} ({reason})")
+        except Exception as e:
+            log(f"Error publishing status: {e}", "error")
+    
+    def _process_message_queue(self):
+        """Process any queued messages when reconnecting"""
+        if not self.connected:
+            return
+            
+        processed = 0
+        while not self.message_queue.empty():
+            try:
+                topic, payload, qos, retain = self.message_queue.get_nowait()
+                self.client.publish(topic, payload, qos=qos, retain=retain)
+                processed += 1
+            except Exception as e:
+                log(f"Error processing queued message: {e}", "error")
+        
+        if processed > 0:
+            log(f"Processed {processed} queued messages")
+    
+    def publish(self, topic: str, payload: str, qos: int = None, retain: bool = None):
+        """Publish message with queuing support"""
+        # Use instance defaults if not specified
+        if qos is None:
+            qos = self.qos
+        if retain is None:
+            retain = self.retain
+            
+        if self.connected and self.client:
+            try:
+                result = self.client.publish(topic, payload, qos=qos, retain=retain)
+                if result.rc != mqtt.MQTT_ERR_SUCCESS:
+                    log(f"Failed to publish to {topic}: {result.rc}", "error")
+                    # Queue message for later
+                    self.message_queue.put((topic, payload, qos, retain))
+                return result
+            except Exception as e:
+                log(f"Error publishing to {topic}: {e}", "error")
+                # Queue message for later
+                self.message_queue.put((topic, payload, qos, retain))
+        else:
+            # Queue message for later
+            self.message_queue.put((topic, payload, qos, retain))
+            log(f"MQTT not connected - queued message for {topic}")
+    
+    def connect(self) -> bool:
+        """Connect to MQTT broker with retry logic"""
+        if not self.client:
+            self.create_client()
+        
+        max_retries = 10
+        retry_count = 0
+        
+        while retry_count < max_retries and not self.connected:
+            try:
+                log(f"Connecting to MQTT broker {self.broker}:{self.port} (attempt {retry_count + 1}/{max_retries})")
+                
+                with self.connection_lock:
+                    self.client.connect(self.broker, self.port, 60)
+                    self.client.loop_start()
+                
+                # Wait for connection callback
+                wait_time = 0
+                while wait_time < 10 and not self.connected:
+                    time.sleep(0.5)
+                    wait_time += 0.5
+                
+                if self.connected:
+                    log("MQTT connection established successfully")
+                    return True
+                else:
+                    log("MQTT connection timeout - retrying...", "warning")
+                    self.client.loop_stop()
+                    retry_count += 1
+                    
+                    # Exponential backoff
+                    delay = min(self.reconnect_delay * (2 ** retry_count), self.max_reconnect_delay)
+                    log(f"Waiting {delay} seconds before retry...")
+                    time.sleep(delay)
+                    
+            except Exception as e:
+                log(f"MQTT connection failed: {e}. Retrying in {self.reconnect_delay} seconds...", "error")
+                retry_count += 1
+                time.sleep(self.reconnect_delay)
+        
+        if not self.connected:
+            log("Failed to connect to MQTT broker after maximum retries", "critical")
+            return False
+        
+        return True
+    
+    def disconnect(self):
+        """Cleanly disconnect from MQTT broker"""
+        if self.connected:
+            self._publish_status("offline", "shutdown")
+            time.sleep(1)  # Allow status message to be sent
+        
+        if self.client:
+            try:
+                self.client.loop_stop()
+                self.client.disconnect()
+                log("MQTT client disconnected")
+            except Exception as e:
+                log(f"Error during MQTT disconnect: {e}", "error")
+        
+        self.connected = False
+    
+    def is_connected(self) -> bool:
+        """Check if MQTT client is connected"""
+        return self.connected and self.client and self.client.is_connected()
+    
+    def send_heartbeat(self):
+        """Send heartbeat to monitor connection health"""
+        current_time = time.time()
+        if current_time - self.last_heartbeat >= self.heartbeat_interval:
+            if self.connected:
+                self._publish_status("online", "heartbeat")
+                self.last_heartbeat = current_time
+            else:
+                log("MQTT connection lost - attempting reconnection", "warning")
+                self.connect()
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get MQTT connection statistics"""
+        return {
+            "connected": self.connected,
+            "broker": f"{self.broker}:{self.port}",
+            "topic": self.topic,
+            "queued_messages": self.message_queue.qsize(),
+            "last_heartbeat": datetime.fromtimestamp(self.last_heartbeat).isoformat() if self.last_heartbeat > 0 else "Never",
+            "qos": self.qos,
+            "retain": self.retain
+        }
+    
+    def log_stats(self):
+        """Log current MQTT statistics"""
+        stats = self.get_stats()
+        log(f"MQTT Stats: Connected={stats['connected']}, Broker={stats['broker']}, Queued={stats['queued_messages']}, QoS={stats['qos']}, Retain={stats['retain']}")
 
-def on_disconnect(client, userdata, rc, properties=None):
-    log(f"Disconnected from MQTT broker with reason code: {rc}", "warning")
+
 
 def main():
     log(f"Starting Airplanes Live Home Assistant Add-on v{get_addon_version()}")
@@ -599,52 +863,18 @@ def main():
     log(f"Configuration: API_TYPE={API_TYPE}, API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}km ({RADIUS_NMI:.1f}nm)")
     log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}")
     
-    client = mqtt.Client(protocol=mqtt.MQTTv5)
+    mqtt_manager = MQTTManager(MQTT_BROKER, MQTT_PORT, MQTT_TOPIC, MQTT_USERNAME, MQTT_PASSWORD)
+    mqtt_manager.qos = MQTT_QOS
+    mqtt_manager.retain = MQTT_RETAIN
     
-    # Configure MQTT authentication if credentials are provided
-    if MQTT_USERNAME and MQTT_PASSWORD:
-        client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
-        log("MQTT authentication configured")
-    else:
-        log("No MQTT credentials provided - attempting anonymous connection", "warning")
-    
-    client.on_connect = on_connect
-    client.on_disconnect = on_disconnect
-
-    # Connect to MQTT broker with retry logic
-    max_retries = 5
-    retry_count = 0
-    
-    while retry_count < max_retries:
-        try:
-            log(f"Connecting to MQTT broker {MQTT_BROKER}:{MQTT_PORT} (attempt {retry_count + 1}/{max_retries})")
-            client.connect(MQTT_BROKER, MQTT_PORT, 60)
-            client.loop_start()
-            
-            # Wait a moment to see if connection is successful
-            time.sleep(2)
-            if client.is_connected():
-                log("MQTT connection established successfully")
-                break
-            else:
-                log("MQTT connection failed - retrying...", "warning")
-                client.loop_stop()
-                retry_count += 1
-                time.sleep(5)
-                
-        except Exception as e:
-            log(f"MQTT connection failed: {e}. Retrying in 5 seconds...", "error")
-            retry_count += 1
-            time.sleep(5)
-    
-    if not client.is_connected():
-        log("Failed to connect to MQTT broker after maximum retries. Continuing without MQTT...", "critical")
-        client = None
+    if not mqtt_manager.connect():
+        log("Failed to connect to MQTT broker. Exiting.", "critical")
+        return
 
     try:
         # Publish discovery once at startup
-        if client and client.is_connected():
-            publish_discovery(client)
+        if mqtt_manager.is_connected():
+            publish_discovery(mqtt_manager)
             # Wait a moment for discovery to be processed
             time.sleep(3)
             # Publish initial data to help with discovery
@@ -660,16 +890,27 @@ def main():
                 "weather": "Unknown",
                 "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
-            client.publish(f"{MQTT_TOPIC}/summary", json.dumps(initial_data), retain=True)
+            mqtt_manager.publish(f"{MQTT_TOPIC}/summary", json.dumps(initial_data), retain=True)
             log("Initial data published")
+        
+        # Counter for periodic stats logging
+        stats_counter = 0
         
         while True:
             data = fetch_airplane_data()
-            if client and client.is_connected():
-                publish_summary_data(client, data)
-                publish_individual_aircraft(client, data)
+            if mqtt_manager.is_connected():
+                publish_summary_data(mqtt_manager, data)
+                publish_individual_aircraft(mqtt_manager, data)
+                mqtt_manager.send_heartbeat() # Send heartbeat regularly
             else:
                 log("MQTT not connected - skipping publish", "warning")
+                mqtt_manager.send_heartbeat() # Still send heartbeat even if not connected
+            
+            # Log MQTT stats every 10 cycles
+            stats_counter += 1
+            if stats_counter % 10 == 0:
+                mqtt_manager.log_stats()
+            
             log(f"Sleeping for {UPDATE_INTERVAL} seconds")
             time.sleep(UPDATE_INTERVAL)
     except KeyboardInterrupt:
@@ -677,9 +918,7 @@ def main():
     except Exception as e:
         log(f"Unexpected error: {e}", "critical")
     finally:
-        if client:
-            client.loop_stop()
-            client.disconnect()
+        mqtt_manager.disconnect()
         log("Cleanup completed")
 
 if __name__ == "__main__":

@@ -213,7 +213,14 @@
  - **ENHANCED**: Robust logging that won't crash on missing data fields
  - **TECHNICAL**: Added comprehensive debugging for API response structure and summary payload creation
 
+ Version 1.4.20 Changes:
+ - **IMPROVED**: Enhanced error handling for API response parsing
+ - **FIXED**: Better handling of malformed aircraft data
+ - **ENHANCED**: More robust summary data generation
 
+ Version 1.4.21 Changes:
+ - **IMPROVED**: Better logging for API response debugging
+ - **ENHANCED**: Improved error messages for troubleshooting
 
  Version 1.4.22 Changes:
  - **FIXED**: API response field mapping from 'ac' to 'aircraft' for REST API compatibility
@@ -237,3 +244,21 @@
  - **IMPROVED**: Centralized version management - version number now read from config.yaml instead of hardcoded in multiple files
  - **ENHANCED**: Added PyYAML dependency for YAML configuration parsing
  - **TECHNICAL**: Single source of truth for version number across all addon components
+
+
+
+ Version 1.4.28 Changes:
+ - **NEW**: Complete MQTT system overhaul with robust connection management
+ - **NEW**: Added MQTTManager class for better connection reliability and message queuing
+ - **NEW**: Configurable MQTT QoS (0, 1, 2) and message retention settings
+ - **IMPROVED**: Exponential backoff reconnection with configurable delays (1s to 5 minutes)
+ - **IMPROVED**: Message queuing when disconnected - messages are sent when reconnected
+ - **IMPROVED**: Last Will and Testament for automatic offline status when connection drops
+ - **IMPROVED**: Heartbeat system for connection health monitoring every 30 seconds
+ - **IMPROVED**: Better error handling with specific MQTT error code explanations
+ - **IMPROVED**: Thread-safe connection management with connection locking
+ - **ENHANCED**: MQTT status topic for monitoring add-on health and connection state
+ - **ENHANCED**: Comprehensive MQTT statistics and connection monitoring
+ - **ENHANCED**: Better Home Assistant integration with improved discovery reliability
+ - **TECHNICAL**: Automatic message processing from queue on reconnection
+ - **TECHNICAL**: Enhanced logging for MQTT operations and connection states

@@ -19,6 +19,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 FEEDER_DISCOVERY_DONE = False
+FEEDER_DYNAMIC_DISCOVERY_DONE = False
 
 def log(msg: str, level: str = "info"):
     """Log message with specified level"""
@@ -62,13 +63,13 @@ def get_addon_version():
         return version
     except FileNotFoundError:
         log(f"Config file {config_path} not found, using default version", "warning")
-        return "1.4.31"
+        return "1.4.32"
     except yaml.YAMLError as e:
         log(f"Error parsing config.yaml: {e}, using default version", "error")
-        return "1.4.31"
+        return "1.4.32"
     except Exception as e:
         log(f"Error loading version: {e}, using default version", "error")
-        return "1.4.31"
+        return "1.4.32"
 
 # Load configuration
 config = load_config()
@@ -668,6 +669,77 @@ def _publish_feeder_discovery(mqtt_manager):
     FEEDER_DISCOVERY_DONE = True
 
 
+def _sanitize_metric_key(path_parts):
+    """Sanitize a list of path parts into a safe metric key for unique_id/topic."""
+    safe = []
+    for p in path_parts:
+        if isinstance(p, int):
+            safe.append(str(p))
+        else:
+            safe.append(str(p).lower().replace(" ", "_").replace("/", "_").replace("-", "_").replace("__", "_"))
+    return "_".join(safe)
+
+
+def _iter_leaf_paths(data, prefix=None, depth=0, max_depth=10):
+    """Yield (path_list, value) for each leaf node (non-dict, non-list) in dict."""
+    if prefix is None:
+        prefix = []
+    if depth > max_depth:
+        return
+    if isinstance(data, dict):
+        for k, v in data.items():
+            _iter = _iter_leaf_paths(v, prefix + [k], depth + 1, max_depth)
+            if _iter is None:
+                continue
+            for item in _iter:
+                yield item
+    elif isinstance(data, list):
+        # Skip long arrays; expose their length instead
+        length = len(data)
+        yield (prefix + ["length"], length)
+    else:
+        # primitive leaf
+        yield (prefix, data)
+
+
+def _publish_dynamic_feeder_discovery(mqtt_manager, stats: Dict[str, Any], limit: int = 200):
+    """Publish discovery entries for all leaf metrics in stats.json."""
+    global FEEDER_DYNAMIC_DISCOVERY_DONE
+    if FEEDER_DYNAMIC_DISCOVERY_DONE or not stats:
+        return
+    sensors_published = 0
+    for path, value in _iter_leaf_paths(stats):
+        # Only publish reasonable primitives
+        if not isinstance(value, (int, float, bool, str)):
+            continue
+        metric_key = _sanitize_metric_key(path)
+        discovery_topic = f"homeassistant/sensor/airplanes_live_feeder_{metric_key}/config"
+        value_template = "{{ value_json." + ".".join([str(p) for p in path]) + " }}"
+        payload = {
+            "name": f"Feeder: {'/'.join([str(p) for p in path])}",
+            "state_topic": f"{MQTT_TOPIC}/feeder/summary",
+            "unique_id": f"airplanes_live_feeder_{metric_key}",
+            "value_template": value_template,
+            "device": {
+                "identifiers": ["airplanes_live_device"],
+                "name": "Airplanes Live",
+                "manufacturer": "BenCos17",
+                "model": "Aircraft Tracker (Powered by airplanes.live)",
+                "sw_version": get_addon_version()
+            }
+        }
+        try:
+            mqtt_manager.publish(discovery_topic, json.dumps(payload), retain=True)
+            sensors_published += 1
+        except Exception as e:
+            log(f"Error publishing dynamic feeder discovery for {metric_key}: {e}", "error")
+        if sensors_published >= limit:
+            break
+    if sensors_published > 0:
+        FEEDER_DYNAMIC_DISCOVERY_DONE = True
+        log(f"Published {sensors_published} dynamic feeder sensors (limit {limit})")
+
+
 def fetch_feeder_stats() -> Optional[Dict[str, Any]]:
     """Fetch local feeder stats JSON (e.g., readsb/dump1090 metrics.json)."""
     if not FEEDER_MONITOR_ENABLED:
@@ -702,6 +774,9 @@ def publish_feeder_stats(mqtt_manager, stats: Optional[Dict[str, Any]]):
         # Ensure discovery exists once stats are published
         if not FEEDER_DISCOVERY_DONE:
             _publish_feeder_discovery(mqtt_manager)
+        # Publish dynamic sensors for all leaf metrics (first time only)
+        if not FEEDER_DYNAMIC_DISCOVERY_DONE and stats:
+            _publish_dynamic_feeder_discovery(mqtt_manager, stats)
     except Exception as e:
         log(f"Error publishing feeder stats: {e}", "error")
 

@@ -20,6 +20,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 FEEDER_DISCOVERY_DONE = False
 FEEDER_DYNAMIC_DISCOVERY_DONE = False
+FEEDER_DEVICE_ID = "airplanes_live_feeder_device"
+FEEDER_DEVICE_NAME = "Airplanes Live Feeder"
 
 def log(msg: str, level: str = "info"):
     """Log message with specified level"""
@@ -63,13 +65,13 @@ def get_addon_version():
         return version
     except FileNotFoundError:
         log(f"Config file {config_path} not found, using default version", "warning")
-        return "1.4.32"
+        return "1.4.33"
     except yaml.YAMLError as e:
         log(f"Error parsing config.yaml: {e}, using default version", "error")
-        return "1.4.32"
+        return "1.4.33"
     except Exception as e:
         log(f"Error loading version: {e}, using default version", "error")
-        return "1.4.32"
+        return "1.4.33"
 
 # Load configuration
 config = load_config()
@@ -95,6 +97,7 @@ TRACKING_MODE = config.get("tracking_mode", "summary")
 FEEDER_MONITOR_ENABLED = config.get("feeder_monitor_enabled", False)
 FEEDER_STATS_URL = config.get("feeder_stats_url", "http://127.0.0.1:8080/metrics.json")
 FEEDER_MONITOR_INTERVAL = config.get("feeder_monitor_interval", 30)
+FEEDER_FILTER_ZERO_SENSORS = config.get("feeder_filter_zero_sensors", False)
 
 # Auto-configure API URL based on type (unless disabled)
 if DISABLE_AUTO_CONFIG:
@@ -156,6 +159,8 @@ def validate_config():
             errors.append("Feeder monitor enabled but feeder_stats_url is invalid")
         if not isinstance(FEEDER_MONITOR_INTERVAL, (int, float)) or FEEDER_MONITOR_INTERVAL < 5:
             errors.append(f"Invalid feeder_monitor_interval: {FEEDER_MONITOR_INTERVAL} (must be >= 5)")
+        if not isinstance(FEEDER_FILTER_ZERO_SENSORS, bool):
+            errors.append(f"Invalid feeder_filter_zero_sensors: {FEEDER_FILTER_ZERO_SENSORS} (must be boolean)")
     
     if errors:
         for error in errors:
@@ -646,14 +651,18 @@ def _publish_feeder_discovery(mqtt_manager):
 
     for fs in feeder_sensors:
         discovery_topic = f"homeassistant/sensor/airplanes_live_{fs['key']}/config"
+        # Apply zero-filter for count-like sensors if enabled
+        vt = fs["value_template"]
+        if FEEDER_FILTER_ZERO_SENSORS and fs["key"] in ["feeder_messages_1min", "feeder_strong_1min"]:
+            vt = "{{ (" + vt[3:-2] + ") if ((" + vt[3:-2] + ") | int(0) > 0) else none }}"
         payload = {
             "name": fs["name"],
             "state_topic": fs["state_topic"],
             "unique_id": f"airplanes_live_{fs['key']}",
-            "value_template": fs["value_template"],
+            "value_template": vt,
             "device": {
-                "identifiers": ["airplanes_live_device"],
-                "name": "Airplanes Live",
+                "identifiers": [FEEDER_DEVICE_ID],
+                "name": FEEDER_DEVICE_NAME,
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
                 "sw_version": get_addon_version()
@@ -714,15 +723,20 @@ def _publish_dynamic_feeder_discovery(mqtt_manager, stats: Dict[str, Any], limit
             continue
         metric_key = _sanitize_metric_key(path)
         discovery_topic = f"homeassistant/sensor/airplanes_live_feeder_{metric_key}/config"
-        value_template = "{{ value_json." + ".".join([str(p) for p in path]) + " }}"
+        json_path = "value_json." + ".".join([str(p) for p in path])
+        # For integer metrics, hide zeros by emitting 'none' so HA shows unavailable
+        if FEEDER_FILTER_ZERO_SENSORS and isinstance(value, int):
+            value_template = "{{ " + json_path + " if (" + json_path + " | int(0) > 0) else none }}"
+        else:
+            value_template = "{{ " + json_path + " }}"
         payload = {
             "name": f"Feeder: {'/'.join([str(p) for p in path])}",
             "state_topic": f"{MQTT_TOPIC}/feeder/summary",
             "unique_id": f"airplanes_live_feeder_{metric_key}",
             "value_template": value_template,
             "device": {
-                "identifiers": ["airplanes_live_device"],
-                "name": "Airplanes Live",
+                "identifiers": [FEEDER_DEVICE_ID],
+                "name": FEEDER_DEVICE_NAME,
                 "manufacturer": "BenCos17",
                 "model": "Aircraft Tracker (Powered by airplanes.live)",
                 "sw_version": get_addon_version()

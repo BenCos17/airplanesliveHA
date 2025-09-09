@@ -1,10 +1,11 @@
+## 1.4.33
+- Feeder metrics device separated as "Airplanes Live Feeder"
+- Dynamic feeder metrics: hide zero integer values via value_template (shows unavailable)
+
 ## 1.4.32
 - Dynamic feeder metrics: auto-discover up to 200 sensors from stats.json
 - Feeder discovery now also triggers on first stats publish
 
-## 1.4.33
-- Feeder metrics device separated as "Airplanes Live Feeder"
-- Dynamic feeder metrics: hide zero integer values via value_template (shows unavailable)
 ## 1.4.31
 - Feeder discovery now published at startup and on first stats publish 
 ## 1.4.30

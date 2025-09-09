@@ -1,3 +1,5 @@
+## 1.4.31
+- Feeder discovery now published at startup and on first stats publish 
 ## 1.4.30
 - Added feeder monitoring: fetch local feeder metrics, MQTT discovery for key stats, and publish raw/summary payloads
 - Configurable from the add-on UI: `feeder_monitor_enabled`, `feeder_stats_url`, `feeder_monitor_interval`

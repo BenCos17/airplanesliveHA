@@ -18,6 +18,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger(__name__)
+FEEDER_DISCOVERY_DONE = False
 
 def log(msg: str, level: str = "info"):
     """Log message with specified level"""
@@ -61,13 +62,13 @@ def get_addon_version():
         return version
     except FileNotFoundError:
         log(f"Config file {config_path} not found, using default version", "warning")
-        return "1.4.30"
+        return "1.4.31"
     except yaml.YAMLError as e:
         log(f"Error parsing config.yaml: {e}, using default version", "error")
-        return "1.4.30"
+        return "1.4.31"
     except Exception as e:
         log(f"Error loading version: {e}, using default version", "error")
-        return "1.4.30"
+        return "1.4.31"
 
 # Load configuration
 config = load_config()
@@ -338,6 +339,14 @@ def publish_discovery(mqtt_manager):
         except Exception as e:
             log(f"Error publishing discovery for {sensor['name']}: {e}", "error")
     
+    # Also publish feeder discovery if enabled
+    try:
+        if FEEDER_MONITOR_ENABLED and not FEEDER_DISCOVERY_DONE:
+            # Call helper that publishes feeder sensors
+            _publish_feeder_discovery(mqtt_manager)
+    except Exception as e:
+        log(f"Error during feeder discovery: {e}", "error")
+    
     log("Discovery publishing completed")
 
 def publish_individual_aircraft(mqtt_manager, aircraft_list):
@@ -598,6 +607,67 @@ def publish_summary_data(mqtt_manager, aircraft_list):
             log(f"Aircraft data sample: {aircraft_list[:2]}", "error")
 
 
+def _publish_feeder_discovery(mqtt_manager):
+    """Publish feeder monitoring sensors via MQTT discovery."""
+    global FEEDER_DISCOVERY_DONE
+    if FEEDER_DISCOVERY_DONE:
+        return
+    if not FEEDER_MONITOR_ENABLED:
+        return
+    feeder_sensors = [
+        {
+            "name": "Feeder Messages 1min",
+            "key": "feeder_messages_1min",
+            "state_topic": f"{MQTT_TOPIC}/feeder/summary",
+            "value_template": "{{ value_json.last1min.messages }}"
+        },
+        {
+            "name": "Feeder Strong Signals 1min",
+            "key": "feeder_strong_1min",
+            "state_topic": f"{MQTT_TOPIC}/feeder/summary",
+            "value_template": "{{ value_json.last1min.local.strong_signals }}"
+        },
+        {
+            "name": "Feeder Noise dBFS 1min",
+            "key": "feeder_noise_1min",
+            "state_topic": f"{MQTT_TOPIC}/feeder/summary",
+            "value_template": "{{ value_json.last1min.local.noise }}",
+            "unit": "dB"
+        },
+        {
+            "name": "Feeder Gain dB",
+            "key": "feeder_gain_db",
+            "state_topic": f"{MQTT_TOPIC}/feeder/summary",
+            "value_template": "{{ value_json.gain_db }}",
+            "unit": "dB"
+        }
+    ]
+
+    for fs in feeder_sensors:
+        discovery_topic = f"homeassistant/sensor/airplanes_live_{fs['key']}/config"
+        payload = {
+            "name": fs["name"],
+            "state_topic": fs["state_topic"],
+            "unique_id": f"airplanes_live_{fs['key']}",
+            "value_template": fs["value_template"],
+            "device": {
+                "identifiers": ["airplanes_live_device"],
+                "name": "Airplanes Live",
+                "manufacturer": "BenCos17",
+                "model": "Aircraft Tracker (Powered by airplanes.live)",
+                "sw_version": get_addon_version()
+            }
+        }
+        if fs.get("unit"):
+            payload["unit_of_measurement"] = fs["unit"]
+        try:
+            mqtt_manager.publish(discovery_topic, json.dumps(payload), retain=True)
+            log(f"Published feeder discovery: {discovery_topic}")
+        except Exception as e:
+            log(f"Error publishing feeder discovery for {fs['name']}: {e}", "error")
+    FEEDER_DISCOVERY_DONE = True
+
+
 def fetch_feeder_stats() -> Optional[Dict[str, Any]]:
     """Fetch local feeder stats JSON (e.g., readsb/dump1090 metrics.json)."""
     if not FEEDER_MONITOR_ENABLED:
@@ -629,6 +699,9 @@ def publish_feeder_stats(mqtt_manager, stats: Optional[Dict[str, Any]]):
         mqtt_manager.publish(f"{base_topic}/raw", json.dumps(stats or {}), retain=True)
         # Summary mirrors the raw structure but is intended for HA sensors value_template
         mqtt_manager.publish(f"{base_topic}/summary", json.dumps(stats or {}), retain=True)
+        # Ensure discovery exists once stats are published
+        if not FEEDER_DISCOVERY_DONE:
+            _publish_feeder_discovery(mqtt_manager)
     except Exception as e:
         log(f"Error publishing feeder stats: {e}", "error")
 

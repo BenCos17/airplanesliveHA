@@ -1,3 +1,7 @@
+## 1.4.30
+- Added feeder monitoring: fetch local feeder metrics, MQTT discovery for key stats, and publish raw/summary payloads
+- Configurable from the add-on UI: `feeder_monitor_enabled`, `feeder_stats_url`, `feeder_monitor_interval`
+- Documentation updated (README, DOCS)
  Version 1.3.18 Changes:
  testing mqtt stuff to try and fix the config
 

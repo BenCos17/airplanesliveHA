@@ -50,6 +50,24 @@ This add-on integrates with the [airplanes.live](https://airplanes.live) API to 
   - **detailed**: Individual aircraft tracking with separate entities
   - **both**: Both summary and detailed tracking
 
+### Feeder Monitoring (optional)
+
+If you run a local feeder (e.g., readsb, dump1090-fa) that exposes a metrics JSON endpoint, you can have this add-on publish feeder health and performance metrics to MQTT.
+
+- `feeder_monitor_enabled` (default: false)
+- `feeder_stats_url` (default: http://127.0.0.1:8080/metrics.json)
+- `feeder_monitor_interval` seconds (default: 30)
+
+MQTT topics:
+- Raw JSON: `airplanes/live/feeder/raw`
+- Summary JSON (used by HA sensors): `airplanes/live/feeder/summary`
+
+Home Assistant discovery sensors are automatically created for a few key metrics when enabled:
+- Feeder Messages 1min: `last1min.messages`
+- Feeder Strong Signals 1min: `last1min.local.strong_signals`
+- Feeder Noise dBFS 1min: `last1min.local.noise`
+- Feeder Gain dB: `gain_db`
+
 ## Installation
 
 1. Add this repository to your Home Assistant instance

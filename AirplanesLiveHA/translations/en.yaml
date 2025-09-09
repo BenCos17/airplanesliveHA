@@ -48,6 +48,9 @@ options:
   tracking_mode_summary: "Summary Only"
   tracking_mode_detailed: "Detailed Tracking"
   tracking_mode_both: "Both Summary and Detailed"
+  feeder_monitor_enabled: "Enable Feeder Monitoring"
+  feeder_stats_url: "Feeder Stats URL"
+  feeder_monitor_interval: "Feeder Monitor Interval (seconds)"
 
 options_description:
   update_interval: "How often to fetch new data from the API"
@@ -64,6 +67,9 @@ options_description:
   longitude: "Your location's longitude (-180 to 180)"
   radius: "Search radius in kilometers"
   tracking_mode: "Choose between summary statistics only, detailed individual aircraft tracking, or both"
+  feeder_monitor_enabled: "Publish local feeder health and performance metrics to MQTT"
+  feeder_stats_url: "HTTP URL to the feeder metrics JSON (e.g., http://127.0.0.1:8080/metrics.json)"
+  feeder_monitor_interval: "How often to query the feeder stats endpoint"
 
 tracking_mode_options:
   summary: "Summary Only - Provides count, closest, highest, and fastest aircraft statistics"

@@ -95,6 +95,10 @@ api_url: "https://your-custom-endpoint.com/api"
 ### Summary Data
 - `airplanes/live/summary` - Summary statistics
 
+### Feeder Monitoring (optional)
+- `airplanes/live/feeder/raw` - Raw feeder metrics JSON
+- `airplanes/live/feeder/summary` - Same payload for HA sensors
+
 ### Individual Aircraft (Detailed Mode)
 - `airplanes/live/aircraft/<hex>/state` - Individual aircraft data
 

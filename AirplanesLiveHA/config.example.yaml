@@ -30,6 +30,12 @@ disable_auto_config: false            # Set to true to use exact api_url and rad
 # - both: Both summary and detailed tracking
 tracking_mode: summary
 
+# Feeder Monitoring (optional)
+# Enable to publish local feeder statistics (e.g., readsb/dump1090 /metrics.json)
+feeder_monitor_enabled: false
+feeder_stats_url: "http://127.0.0.1:8080/metrics.json"
+feeder_monitor_interval: 30  # seconds
+
 # Example configurations for different use cases:
 
 # For basic monitoring (summary only):

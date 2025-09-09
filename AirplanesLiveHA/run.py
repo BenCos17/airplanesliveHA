@@ -61,13 +61,13 @@ def get_addon_version():
         return version
     except FileNotFoundError:
         log(f"Config file {config_path} not found, using default version", "warning")
-        return "1.4.29"
+        return "1.4.30"
     except yaml.YAMLError as e:
         log(f"Error parsing config.yaml: {e}, using default version", "error")
-        return "1.4.29"
+        return "1.4.30"
     except Exception as e:
         log(f"Error loading version: {e}, using default version", "error")
-        return "1.4.29"
+        return "1.4.30"
 
 # Load configuration
 config = load_config()
@@ -90,6 +90,9 @@ MQTT_PASSWORD = config.get("mqtt_password", "")
 MQTT_QOS = config.get("mqtt_qos", 1)  # Default to QoS 1 for reliability
 MQTT_RETAIN = config.get("mqtt_retain", True)  # Default to retain messages
 TRACKING_MODE = config.get("tracking_mode", "summary")
+FEEDER_MONITOR_ENABLED = config.get("feeder_monitor_enabled", False)
+FEEDER_STATS_URL = config.get("feeder_stats_url", "http://127.0.0.1:8080/metrics.json")
+FEEDER_MONITOR_INTERVAL = config.get("feeder_monitor_interval", 30)
 
 # Auto-configure API URL based on type (unless disabled)
 if DISABLE_AUTO_CONFIG:
@@ -144,6 +147,13 @@ def validate_config():
     # Validate MQTT retain
     if not isinstance(MQTT_RETAIN, bool):
         errors.append(f"Invalid MQTT retain: {MQTT_RETAIN} (must be boolean)")
+    
+    # Validate feeder monitor
+    if FEEDER_MONITOR_ENABLED:
+        if not isinstance(FEEDER_STATS_URL, str) or not FEEDER_STATS_URL:
+            errors.append("Feeder monitor enabled but feeder_stats_url is invalid")
+        if not isinstance(FEEDER_MONITOR_INTERVAL, (int, float)) or FEEDER_MONITOR_INTERVAL < 5:
+            errors.append(f"Invalid feeder_monitor_interval: {FEEDER_MONITOR_INTERVAL} (must be >= 5)")
     
     if errors:
         for error in errors:
@@ -587,6 +597,41 @@ def publish_summary_data(mqtt_manager, aircraft_list):
         if aircraft_list:
             log(f"Aircraft data sample: {aircraft_list[:2]}", "error")
 
+
+def fetch_feeder_stats() -> Optional[Dict[str, Any]]:
+    """Fetch local feeder stats JSON (e.g., readsb/dump1090 metrics.json)."""
+    if not FEEDER_MONITOR_ENABLED:
+        return None
+    try:
+        log(f"Fetching feeder stats from: {FEEDER_STATS_URL}")
+        resp = requests.get(FEEDER_STATS_URL, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        if isinstance(data, dict) and data:
+            return data
+        log("Feeder stats response was empty or not a dict", "warning")
+        return None
+    except requests.exceptions.Timeout:
+        log("Feeder stats request timed out", "warning")
+        return None
+    except Exception as e:
+        log(f"Error fetching feeder stats: {e}", "warning")
+        return None
+
+
+def publish_feeder_stats(mqtt_manager, stats: Optional[Dict[str, Any]]):
+    """Publish feeder stats to MQTT: raw payload and summarized fields."""
+    if not FEEDER_MONITOR_ENABLED:
+        return
+    try:
+        base_topic = f"{MQTT_TOPIC}/feeder"
+        # Raw
+        mqtt_manager.publish(f"{base_topic}/raw", json.dumps(stats or {}), retain=True)
+        # Summary mirrors the raw structure but is intended for HA sensors value_template
+        mqtt_manager.publish(f"{base_topic}/summary", json.dumps(stats or {}), retain=True)
+    except Exception as e:
+        log(f"Error publishing feeder stats: {e}", "error")
+
 # MQTT Configuration and State
 class MQTTManager:
     def __init__(self, broker: str, port: int, topic: str, username: str = "", password: str = ""):
@@ -895,12 +940,20 @@ def main():
         
         # Counter for periodic stats logging
         stats_counter = 0
+        last_feeder_publish = 0.0
         
         while True:
             data = fetch_airplane_data()
             if mqtt_manager.is_connected():
                 publish_summary_data(mqtt_manager, data)
                 publish_individual_aircraft(mqtt_manager, data)
+                # Publish feeder stats on its own cadence
+                if FEEDER_MONITOR_ENABLED:
+                    now_ts = time.time()
+                    if now_ts - last_feeder_publish >= FEEDER_MONITOR_INTERVAL:
+                        feeder = fetch_feeder_stats()
+                        publish_feeder_stats(mqtt_manager, feeder)
+                        last_feeder_publish = now_ts
                 mqtt_manager.send_heartbeat() # Send heartbeat regularly
             else:
                 log("MQTT not connected - skipping publish", "warning")

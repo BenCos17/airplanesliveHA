@@ -19,6 +19,10 @@ RUN pip3 install --no-cache-dir --upgrade pip && \
 # Copy application files
 COPY run.py .
 
+# Set addon version at build time for runtime access
+ARG ADDON_VERSION=1.4.35
+ENV ADDON_VERSION=${ADDON_VERSION}
+
 # Copy s6 service files
 COPY rootfs/ /
 

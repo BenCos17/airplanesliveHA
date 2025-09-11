@@ -1,3 +1,8 @@
+## 1.4.35
+- Use environment-provided version for discovery payloads to avoid runtime config.yaml reads
+- Eliminate repeated config.yaml not found warnings by caching version
+- Silence paho-mqtt deprecation warning by using modern callback API
+
 ## 1.4.34
 - Updated base image to 18.1.1
 

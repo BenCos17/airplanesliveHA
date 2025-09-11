@@ -1,6 +1,6 @@
 name: "Airplanes Live API Add-on"
 description: "An add-on to track live airplane data and expose it as a Home Assistant entity via MQTT."
-version: "1.4.34"
+version: "1.4.35"
 slug: "airplanes_live_api"
 init: false
 arch:

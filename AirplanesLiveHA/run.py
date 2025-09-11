@@ -22,6 +22,9 @@ FEEDER_DISCOVERY_DONE = False
 FEEDER_DYNAMIC_DISCOVERY_DONE = False
 FEEDER_DEVICE_ID = "airplanes_live_feeder_device"
 FEEDER_DEVICE_NAME = "Airplanes Live Feeder"
+# Cache addon version to avoid repeated file reads and warnings
+_CACHED_ADDON_VERSION: Optional[str] = None
+_ADDON_VERSION_WARNED: bool = False
 
 def log(msg: str, level: str = "info"):
     """Log message with specified level"""
@@ -55,23 +58,42 @@ def load_config():
         return {}
 
 def get_addon_version():
-    """Get addon version from config.yaml file"""
+    """Get addon version from ENV, falling back to config.yaml once, then default."""
+    global _CACHED_ADDON_VERSION, _ADDON_VERSION_WARNED
+    if _CACHED_ADDON_VERSION:
+        return _CACHED_ADDON_VERSION
+    # Prefer environment variable set at build/runtime
+    env_version = os.getenv("ADDON_VERSION")
+    if env_version:
+        _CACHED_ADDON_VERSION = env_version
+        log(f"Loaded addon version from environment: {env_version}")
+        return _CACHED_ADDON_VERSION
     config_path = "config.yaml"
     try:
         with open(config_path, 'r') as f:
             config = yaml.safe_load(f)
         version = config.get('version', 'unknown')
-        log(f"Loaded addon version: {version}")
-        return version
+        _CACHED_ADDON_VERSION = version
+        log(f"Loaded addon version from config.yaml: {version}")
+        return _CACHED_ADDON_VERSION
     except FileNotFoundError:
-        log(f"Config file {config_path} not found, using default version", "warning")
-        return "1.4.34"
+        if not _ADDON_VERSION_WARNED:
+            log(f"Config file {config_path} not found, using default version", "warning")
+            _ADDON_VERSION_WARNED = True
+        _CACHED_ADDON_VERSION = "1.4.35"
+        return _CACHED_ADDON_VERSION
     except yaml.YAMLError as e:
-        log(f"Error parsing config.yaml: {e}, using default version", "error")
-        return "1.4.34"
+        if not _ADDON_VERSION_WARNED:
+            log(f"Error parsing config.yaml: {e}, using default version", "error")
+            _ADDON_VERSION_WARNED = True
+        _CACHED_ADDON_VERSION = "1.4.35"
+        return _CACHED_ADDON_VERSION
     except Exception as e:
-        log(f"Error loading version: {e}, using default version", "error")
-        return "1.4.34"
+        if not _ADDON_VERSION_WARNED:
+            log(f"Error loading version: {e}, using default version", "error")
+            _ADDON_VERSION_WARNED = True
+        _CACHED_ADDON_VERSION = "1.4.35"
+        return _CACHED_ADDON_VERSION
 
 # Load configuration
 config = load_config()
@@ -815,7 +837,12 @@ class MQTTManager:
         
     def create_client(self):
         """Create and configure MQTT client"""
-        self.client = mqtt.Client(protocol=mqtt.MQTTv5)
+        # Use modern callback API to avoid deprecation warnings on paho-mqtt >= 2.0
+        try:
+            self.client = mqtt.Client(protocol=mqtt.MQTTv5, callback_api_version=mqtt.CallbackAPIVersion.V5)
+        except Exception:
+            # Fallback for older paho versions without CallbackAPIVersion
+            self.client = mqtt.Client(protocol=mqtt.MQTTv5)
         
         # Set callbacks
         self.client.on_connect = self._on_connect

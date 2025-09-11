@@ -1,4 +1,4 @@
-FROM ghcr.io/hassio-addons/base:14.0.0
+FROM ghcr.io/hassio-addons/base:18.1.1
 
 # Install system dependencies
 RUN apk add --no-cache \

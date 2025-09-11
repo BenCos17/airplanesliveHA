@@ -65,13 +65,13 @@ def get_addon_version():
         return version
     except FileNotFoundError:
         log(f"Config file {config_path} not found, using default version", "warning")
-        return "1.4.33"
+        return "1.4.34"
     except yaml.YAMLError as e:
         log(f"Error parsing config.yaml: {e}, using default version", "error")
-        return "1.4.33"
+        return "1.4.34"
     except Exception as e:
         log(f"Error loading version: {e}, using default version", "error")
-        return "1.4.33"
+        return "1.4.34"
 
 # Load configuration
 config = load_config()

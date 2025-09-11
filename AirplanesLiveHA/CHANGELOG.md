@@ -1,3 +1,6 @@
+## 1.4.34
+- Updated base image to 18.1.1
+
 ## 1.4.33
 - Feeder metrics device separated as "Airplanes Live Feeder"
 - Dynamic feeder metrics: hide zero integer values via value_template (shows unavailable)

@@ -2,7 +2,7 @@
 # Copy this file to your Home Assistant configuration and modify as needed
 
 # Basic Configuration
-update_interval: 10                    # How often to fetch data (seconds)
+update_interval: 25                   # How often to fetch data (seconds)
 latitude: 53.2707                     # Your location latitude (-90 to 90)
 longitude: -9.0568                    # Your location longitude (-180 to 180)
 radius: 50                            # Search radius in kilometers

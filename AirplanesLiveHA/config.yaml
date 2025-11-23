@@ -1,6 +1,6 @@
 name: "Airplanes Live API Add-on"
 description: "An add-on to track live airplane data and expose it as a Home Assistant entity via MQTT."
-version: "1.4.35"
+version: "1.4.36"
 slug: "airplanes_live_api"
 init: false
 arch:
@@ -13,7 +13,7 @@ startup: services
 url: "https://github.com/BenCos17/airplanesliveHA"
 image: "ghcr.io/bencos17/airplanes_live_api_{arch}"
 options:
-  update_interval: 10
+  update_interval: 25
   mqtt_broker: core-mosquitto
   mqtt_port: 1883
   mqtt_topic: airplanes/live

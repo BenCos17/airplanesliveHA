@@ -1,3 +1,6 @@
+## 1.4.36
+- Change update_interval to 25 instead of 10 to reduce spammy updates
+
 ## 1.4.35
 - Use environment-provided version for discovery payloads to avoid runtime config.yaml reads
 - Eliminate repeated config.yaml not found warnings by caching version

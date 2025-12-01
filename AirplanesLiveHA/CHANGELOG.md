@@ -1,7 +1,11 @@
+## 1.4.38
+- Drop deprecated armhf/armv7/i386 architectures per HA 2025.12 requirements
+- Keep Dockerfile/config/runtime version references aligned at 1.4.38
+
 ## 1.4.37
 - Bump home HA version 
 - Update translations 
-- move version numbering to main file so it's not split across files using it 
+- move version numbering to top of file so it's not split in the files using it 
 ## 1.4.36
 - Change update_interval to 25 instead of 10 to reduce spammy updates
 

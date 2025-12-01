@@ -1,3 +1,7 @@
+## 1.4.37
+- Bump home HA version 
+- Update translations 
+- move version numbering to main file so it's not split across files using it 
 ## 1.4.36
 - Change update_interval to 25 instead of 10 to reduce spammy updates
 

@@ -60,6 +60,10 @@ options:
   tracking_mode_summary: "Achoimre Amháin"
   tracking_mode_detailed: "Rianúchán Mionsonraithe"
   tracking_mode_both: "Achoimre agus Rianúchán Mionsonraithe"
+  feeder_monitor_enabled: "Cumasaigh Monatóireacht an Fheithrileora"
+  feeder_stats_url: "URL Staitisticí an Fheithrileora"
+  feeder_monitor_interval: "Eatramh Monatóireachta an Fheithrileora (soicindí)"
+  feeder_filter_zero_sensors: "Folaigh braiteoirí le luach nialasach"
 
 options_description:
   update_interval: "Cé chomh minic a bhailíonn tú sonraí nua ón API"
@@ -76,6 +80,10 @@ options_description:
   longitude: "Domhanfhad do shuíomh (-180 go 180)"
   radius: "Ga cuardaigh i gciliméadair"
   tracking_mode: "Roghnaigh idir staitisticí achoimre amháin, rianúchán mionsonraithe eitleáin aonair, nó an dá cheann"
+  feeder_monitor_enabled: "Foilsigh méadrachtaí sláinte agus feidhmíochta an fheithrileora áitiúil chuig MQTT"
+  feeder_stats_url: "URL HTTP chuig JSON méadrachtaí an fheithrileora (m.sh. http://127.0.0.1:8080/metrics.json)"
+  feeder_monitor_interval: "Cé chomh minic a iarrtar ar an gcríochphointe staidrimh an fheithrileora"
+  feeder_filter_zero_sensors: "Nuair a chumasaítear é, ná cruthaigh braiteoirí do mhéadrachtaí slánuimhreacha atá 0"
 
 tracking_mode_options:
   summary: "Achoimre Amháin - Soláthraíonn staitisticí comhaireamh, eitleán is gaire, is airde, agus is tapúla"

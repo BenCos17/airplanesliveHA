@@ -25,6 +25,7 @@ FEEDER_DEVICE_NAME = "Airplanes Live Feeder"
 # Cache addon version to avoid repeated file reads and warnings
 _CACHED_ADDON_VERSION: Optional[str] = None
 _ADDON_VERSION_WARNED: bool = False
+DEFAULT_ADDON_VERSION = "1.4.37"
 
 def log(msg: str, level: str = "info"):
     """Log message with specified level"""
@@ -80,19 +81,19 @@ def get_addon_version():
         if not _ADDON_VERSION_WARNED:
             log(f"Config file {config_path} not found, using default version", "warning")
             _ADDON_VERSION_WARNED = True
-        _CACHED_ADDON_VERSION = "1.4.35"
+        _CACHED_ADDON_VERSION = DEFAULT_ADDON_VERSION
         return _CACHED_ADDON_VERSION
     except yaml.YAMLError as e:
         if not _ADDON_VERSION_WARNED:
             log(f"Error parsing config.yaml: {e}, using default version", "error")
             _ADDON_VERSION_WARNED = True
-        _CACHED_ADDON_VERSION = "1.4.35"
+        _CACHED_ADDON_VERSION = DEFAULT_ADDON_VERSION
         return _CACHED_ADDON_VERSION
     except Exception as e:
         if not _ADDON_VERSION_WARNED:
             log(f"Error loading version: {e}, using default version", "error")
             _ADDON_VERSION_WARNED = True
-        _CACHED_ADDON_VERSION = "1.4.35"
+        _CACHED_ADDON_VERSION = DEFAULT_ADDON_VERSION
         return _CACHED_ADDON_VERSION
 
 # Load configuration

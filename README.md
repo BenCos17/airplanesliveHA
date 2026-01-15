@@ -14,7 +14,7 @@ The add-on can be configured through the Home Assistant add-on interface with th
 
 - `api_url`: Base URL for the Airplanes.Live API (default: https://api.airplanes.live/v2/point)
 - `latitude`, `longitude`, `radius`: The area to monitor (default: 53.2707, -9.0568, 50km)
-- `update_interval`: How often to fetch new data in seconds (default: 10)
+- `update_interval`: How often to fetch new data in seconds (default: 10)  please respect the api limits and don't spam it though 
 - `mqtt_broker`, `mqtt_port`, `mqtt_topic`: MQTT settings (default: core-mosquitto, 1883, airplanes/live)
 - `mqtt_username`, `mqtt_password`: MQTT authentication (optional)
 

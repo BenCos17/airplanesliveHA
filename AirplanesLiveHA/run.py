@@ -25,7 +25,7 @@ FEEDER_DEVICE_NAME = "Airplanes Live Feeder"
 # Cache addon version to avoid repeated file reads and warnings
 _CACHED_ADDON_VERSION: Optional[str] = None
 _ADDON_VERSION_WARNED: bool = False
-DEFAULT_ADDON_VERSION = "1.4.38"
+DEFAULT_ADDON_VERSION = "1.4.39"
 
 def log(msg: str, level: str = "info"):
     """Log message with specified level"""
@@ -306,14 +306,14 @@ def publish_discovery(mqtt_manager):
         {
             "name": "Fastest Aircraft (Ground)",
             "key": "fastest_ground",
-            "unit": "kts",
+            "unit": "km/h",
             "device_class": "speed",
             "value_template": "{{ value_json.fastest_ground }}"
         },
         {
             "name": "Fastest Aircraft (Air)",
             "key": "fastest_air",
-            "unit": "kts",
+            "unit": "km/h",
             "device_class": "speed",
             "value_template": "{{ value_json.fastest_air }}"
         },
@@ -608,13 +608,17 @@ def publish_summary_data(mqtt_manager, aircraft_list):
                         weather_info = " | ".join(weather_parts)
                         break
             
+            # Convert speeds from knots to km/h (1 knot = 1.852 km/h)
+            fastest_ground_kmh = fastest_ground * 1.852 if fastest_ground > 0 else 0
+            fastest_air_kmh = fastest_air * 1.852 if fastest_air > 0 else 0
+            
             summary_payload = {
                 "count": count,
                 "closest_lowest": closest_lowest,
                 "closest_distance": closest_distance,
                 "highest": f"{highest_aircraft.get('flight', 'Unknown')} ({highest}ft)" if highest_aircraft else highest,
-                "fastest_ground": fastest_ground,
-                "fastest_air": fastest_air,
+                "fastest_ground": fastest_ground_kmh,
+                "fastest_air": fastest_air_kmh,
                 "aircraft_types": ", ".join(aircraft_types) if aircraft_types else "Unknown",
                 "weather": weather_info,
                 "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -627,7 +631,7 @@ def publish_summary_data(mqtt_manager, aircraft_list):
         summary_topic = f"{MQTT_TOPIC}/summary"
         mqtt_manager.publish(summary_topic, json.dumps(summary_payload), retain=True)
         
-        log(f"Published summary: {summary_payload.get('count', 'N/A')} aircraft, lowest: {summary_payload.get('closest_lowest', 'N/A')}, closest: {summary_payload.get('closest_distance', 'N/A')}, highest: {summary_payload.get('highest', 'N/A')}ft, fastest ground: {summary_payload.get('fastest_ground', 'N/A')}kts, fastest air: {summary_payload.get('fastest_air', 'N/A')}kts, types: {summary_payload.get('aircraft_types', 'N/A')}, weather: {summary_payload.get('weather', 'N/A')}")
+        log(f"Published summary: {summary_payload.get('count', 'N/A')} aircraft, lowest: {summary_payload.get('closest_lowest', 'N/A')}, closest: {summary_payload.get('closest_distance', 'N/A')}, highest: {summary_payload.get('highest', 'N/A')}ft, fastest ground: {summary_payload.get('fastest_ground', 'N/A')}km/h, fastest air: {summary_payload.get('fastest_air', 'N/A')}km/h, types: {summary_payload.get('aircraft_types', 'N/A')}, weather: {summary_payload.get('weather', 'N/A')}")
         
     except Exception as e:
         log(f"Error publishing summary data: {e}", "error")

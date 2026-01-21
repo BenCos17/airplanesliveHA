@@ -20,7 +20,7 @@ RUN pip3 install --no-cache-dir --upgrade pip && \
 COPY run.py .
 
 # Set addon version at build time for runtime access
-ARG ADDON_VERSION=1.4.38
+ARG ADDON_VERSION=1.4.37
 ENV ADDON_VERSION=${ADDON_VERSION}
 
 # Copy s6 service files

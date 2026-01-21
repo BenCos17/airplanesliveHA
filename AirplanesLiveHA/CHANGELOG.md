@@ -1,3 +1,9 @@
+## 1.4.39
+- **FIXED**: Changed speed sensor units from `kts` (knots) to `km/h` for Home Assistant compatibility
+- **FIXED**: fixed error "The unit of measurement `kts` is not valid together with device class `speed`"
+- **IMPROVED**: Speed values are now automatically converted from knots to km/h (1 knot = 1.852 km/h) int he codebase
+- **ENHANCED**: Both "Fastest Aircraft (Ground)" and "Fastest Aircraft (Air)" sensors use valid speed units in HA
+
 ## 1.4.38
 - Drop deprecated armhf/armv7/i386 architectures per HA 2025.12 requirements
 - Keep Dockerfile/config/runtime version references aligned at 1.4.38

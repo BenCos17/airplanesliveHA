@@ -156,7 +156,7 @@ tracking_mode: summary # Summary only for better performance
 
 **Successful startup**:
 ```
-[INFO] Starting Airplanes Live Home Assistant Add-on v1.4.22
+[INFO] Starting Airplanes Live Home Assistant Add-on v1.4.39
 [INFO] Configuration validation passed
 [INFO] MQTT connection established successfully
 [INFO] Discovery publishing completed

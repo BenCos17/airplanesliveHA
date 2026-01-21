@@ -237,6 +237,18 @@ docker run -it --rm airplanes-live-api
 3. Update documentation
 4. Create release
 
+## Version Management
+
+**Important**: When updating the add-on version, ensure all version references are synchronized across the following files:
+
+- **config.yaml** - `version` field (line 3)
+- **run.py** - `DEFAULT_ADDON_VERSION` constant (line 28)
+- **Dockerfile** - `ARG ADDON_VERSION` (line 23)
+- **DOCS.md** - Version field in Development section (line 206)
+- **TROUBLESHOOTING.md** - Example log message version (line 159)
+- **CHANGELOG.md** - Add new version entry at the top (historical entries should remain unchanged)
+
+
 ## Contributing
 
 ### Pull Request Process

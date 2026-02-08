@@ -25,7 +25,7 @@ FEEDER_DEVICE_NAME = "Airplanes Live Feeder"
 # Cache addon version to avoid repeated file reads and warnings
 _CACHED_ADDON_VERSION: Optional[str] = None
 _ADDON_VERSION_WARNED: bool = False
-DEFAULT_ADDON_VERSION = "1.4.39"
+DEFAULT_ADDON_VERSION = "1.4.40"
 
 def log(msg: str, level: str = "info"):
     """Log message with specified level"""

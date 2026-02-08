@@ -1,3 +1,7 @@
+## 1.4.41
+- **IMPROVED**: Current Squawk entity state now displays full information: code, description, aircraft count, and aircraft list
+- **CHANGED**: Squawk state format updated to show: `1417 - Squawk (2 aircraft: UAL123, DAL456)` for better visibility
+
 ## 1.4.40
 - **NEW**: Squawk tracking feature - tracks aircraft 4-digit transponder codes (squawks)
 - **NEW**: Single "Current Squawk" entity that displays the active squawk and all associated aircraft

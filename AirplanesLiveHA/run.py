@@ -25,7 +25,7 @@ FEEDER_DEVICE_NAME = "Airplanes Live Feeder"
 # Cache addon version to avoid repeated file reads and warnings
 _CACHED_ADDON_VERSION: Optional[str] = None
 _ADDON_VERSION_WARNED: bool = False
-DEFAULT_ADDON_VERSION = "1.4.40"
+DEFAULT_ADDON_VERSION = "1.4.41"
 
 def log(msg: str, level: str = "info"):
     """Log message with specified level"""
@@ -574,7 +574,7 @@ def _publish_squawk_discovery(mqtt_manager):
             "name": "Current Squawk",
             "state_topic": f"{MQTT_TOPIC}/current_squawk",
             "unique_id": "airplanes_live_current_squawk",
-            "value_template": "{{ value_json.squawk_code }}",
+            "value_template": "{{ value_json.squawk_code }} - {{ value_json.description }} ({{ value_json.aircraft_count }} aircraft: {{ value_json.aircraft_list }})",
             "json_attributes_topic": f"{MQTT_TOPIC}/current_squawk",
             "json_attributes_template": "{{ value_json }}",
             "icon": "mdi:radio-tower",

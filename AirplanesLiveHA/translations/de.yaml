@@ -52,6 +52,9 @@ options:
   feeder_stats_url: "Feeder-Statistiken URL"
   feeder_monitor_interval: "Feeder-Überwachungsintervall (Sekunden)"
   feeder_filter_zero_sensors: "Sensoren mit Nullwert ausblenden"
+  squawk_tracking_enabled: "Squawk-Verfolgung aktivieren"
+  squawk_alert_special_codes: "Warnung bei speziellen Squawk-Codes"
+  custom_squawks: "Benutzerdefinierte Squawk-Codes zum Beobachten"
 
 options_description:
   update_interval: "How often to fetch new data from the API"
@@ -72,6 +75,9 @@ options_description:
   feeder_stats_url: "HTTP URL to the feeder metrics JSON (e.g., http://127.0.0.1:8080/metrics.json)"
   feeder_monitor_interval: "How often to query the feeder stats endpoint"
   feeder_filter_zero_sensors: "When enabled, do not create sensors for integer metrics that are 0"
+  squawk_tracking_enabled: "Verfolgung von Flugtranspondercodes (Squawks) aktivieren und Entitäten für sie erstellen"
+  squawk_alert_special_codes: "Spezielle Warnungen für Notfall-Squawk-Codes erstellen (7700 Notfall, 7600 Funkausfall, 7500 Entführung, etc.)"
+  custom_squawks: "Benutzerdefinierte 4-stellige Squawk-Codes hinzufügen, die überwacht werden sollen (z. B. 1234). Diese werden in der aktuellen Squawk-Entität angezeigt"
 
 tracking_mode_options:
   summary: "Summary Only - Provides count, closest, highest, and fastest aircraft statistics"

@@ -1,3 +1,13 @@
+## 1.4.40
+- **NEW**: Squawk tracking feature - tracks aircraft 4-digit transponder codes (squawks)
+- **NEW**: Single "Current Squawk" entity that displays the active squawk and all associated aircraft
+- **NEW**: Smart squawk prioritization: emergency codes first, then by aircraft count
+- **NEW**: Custom squawk configuration - add any 4-digit codes to watch via `custom_squawks` option
+- **NEW**: Special squawk alerts for emergency codes (7700, 7600, 7500, etc.)
+- **ENHANCED**: MQTT discovery for current squawk with rich attributes (aircraft list, first/last seen timestamps)
+- **IMPROVED**: Squawk data automatically integrated into summary entity with detailed attributes
+- **ADDED**: Full translation support for squawk features in English, German, and Irish
+
 ## 1.4.39
 - **FIXED**: Changed speed sensor units from `kts` (knots) to `km/h` for Home Assistant compatibility
 - **FIXED**: fixed error "The unit of measurement `kts` is not valid together with device class `speed`"

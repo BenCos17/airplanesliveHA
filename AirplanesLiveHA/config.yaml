@@ -1,6 +1,6 @@
 name: "Airplanes Live API Add-on"
 description: "An add-on to track live airplane data and expose it as a Home Assistant entity via MQTT."
-version: "1.4.39"
+version: "1.4.40"
 slug: "airplanes_live_api"
 init: false
 arch:
@@ -30,6 +30,9 @@ options:
   feeder_stats_url: "http://127.0.0.1:8080/metrics.json"
   feeder_monitor_interval: 30
   feeder_filter_zero_sensors: false
+  squawk_tracking_enabled: true
+  squawk_alert_special_codes: true
+  custom_squawks: []
 schema:
   update_interval: int
   mqtt_broker: str
@@ -51,3 +54,6 @@ schema:
   feeder_stats_url: str
   feeder_monitor_interval: int
   feeder_filter_zero_sensors: bool
+  squawk_tracking_enabled: bool
+  squawk_alert_special_codes: bool
+  custom_squawks: [str]

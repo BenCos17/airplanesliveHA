@@ -121,6 +121,29 @@ FEEDER_MONITOR_ENABLED = config.get("feeder_monitor_enabled", False)
 FEEDER_STATS_URL = config.get("feeder_stats_url", "http://127.0.0.1:8080/metrics.json")
 FEEDER_MONITOR_INTERVAL = config.get("feeder_monitor_interval", 30)
 FEEDER_FILTER_ZERO_SENSORS = config.get("feeder_filter_zero_sensors", False)
+SQUAWK_TRACKING_ENABLED = config.get("squawk_tracking_enabled", True)
+SQUAWK_ALERT_SPECIAL_CODES = config.get("squawk_alert_special_codes", True)
+CUSTOM_SQUAWKS = config.get("custom_squawks", [])
+
+# Special squawk codes that warrant alerts
+SPECIAL_SQUAWKS = {
+    "7700": "Emergency",
+    "7600": "Radio Failure",
+    "7500": "Hijacking",
+    "7400": "Unlawful Interference",
+    "7667": "Reserved",
+    "7777": "Reserved"
+}
+
+# Merge custom squawks with special ones
+for custom_code in CUSTOM_SQUAWKS:
+    if custom_code not in SPECIAL_SQUAWKS:
+        SPECIAL_SQUAWKS[custom_code] = "Custom Watch"
+
+# Track current active squawk
+CURRENT_SQUAWK = None
+CURRENT_SQUAWK_AIRCRAFT = []
+TRACKED_SQUAWKS = {}
 
 # Auto-configure API URL based on type (unless disabled)
 if DISABLE_AUTO_CONFIG:
@@ -339,6 +362,18 @@ def publish_discovery(mqtt_manager):
             "value_template": "{{ value_json.last_update }}"
         }
     ]
+    
+    # Add squawk-related sensors if squawk tracking is enabled
+    if SQUAWK_TRACKING_ENABLED:
+        sensors.extend([
+            {
+                "name": "Current Squawk",
+                "key": "current_squawk",
+                "unit": None,
+                "device_class": None,
+                "value_template": "{{ value_json.current_squawk }}"
+            }
+        ])
 
     for sensor in sensors:
         discovery_topic = f"homeassistant/sensor/airplanes_live_{sensor['key']}/config"
@@ -367,6 +402,10 @@ def publish_discovery(mqtt_manager):
             log(f"Published discovery for {sensor['name']}")
         except Exception as e:
             log(f"Error publishing discovery for {sensor['name']}: {e}", "error")
+    
+    # Publish individual squawk discovery if enabled
+    if SQUAWK_TRACKING_ENABLED:
+        _publish_squawk_discovery(mqtt_manager)
     
     # Also publish feeder discovery if enabled
     try:
@@ -404,6 +443,7 @@ def publish_individual_aircraft(mqtt_manager, aircraft_list):
                 "track": aircraft.get('track'),
                 "lat": aircraft.get('lat'),
                 "lon": aircraft.get('lon'),
+                "squawk": aircraft.get('squawk', 'Unknown'),
                 "last_seen": datetime.now().isoformat()
             }
             
@@ -428,6 +468,179 @@ def publish_individual_aircraft(mqtt_manager, aircraft_list):
         except Exception as e:
             log(f"Error publishing individual aircraft {hex_code}: {e}", "error")
 
+def extract_squawks(aircraft_list) -> Dict[str, Any]:
+    """Extract and track squawk information from aircraft data"""
+    global CURRENT_SQUAWK, CURRENT_SQUAWK_AIRCRAFT, TRACKED_SQUAWKS
+    
+    if not aircraft_list or not isinstance(aircraft_list, list):
+        return {
+            "current_squawk": "None"
+        }
+    
+    # Collect all squawks by priority: emergency/special first, then by count
+    squawk_counts = {}
+    squawk_aircraft_map = {}
+    special_squawks_detected = []
+    
+    for aircraft in aircraft_list:
+        try:
+            squawk = aircraft.get('squawk')
+            flight = aircraft.get('flight', 'Unknown')
+            hex_code = aircraft.get('hex', 'unknown')
+            
+            if squawk and squawk != '0000':
+                # Track this squawk
+                if squawk not in TRACKED_SQUAWKS:
+                    TRACKED_SQUAWKS[squawk] = {
+                        "first_seen": datetime.now().isoformat(),
+                        "last_seen": datetime.now().isoformat(),
+                        "aircraft": flight,
+                        "hex": hex_code
+                    }
+                else:
+                    TRACKED_SQUAWKS[squawk]["last_seen"] = datetime.now().isoformat()
+                
+                # Count and map aircraft per squawk
+                if squawk not in squawk_counts:
+                    squawk_counts[squawk] = 0
+                    squawk_aircraft_map[squawk] = []
+                
+                squawk_counts[squawk] += 1
+                squawk_aircraft_map[squawk].append({
+                    "flight": flight,
+                    "hex": hex_code
+                })
+                
+                # Check for special squawks if alerting is enabled
+                if SQUAWK_ALERT_SPECIAL_CODES and squawk in SPECIAL_SQUAWKS:
+                    special_squawks_detected.append({
+                        "squawk": squawk,
+                        "description": SPECIAL_SQUAWKS[squawk],
+                        "aircraft": flight,
+                        "hex": hex_code,
+                        "detected": datetime.now().isoformat()
+                    })
+                    log(f"ALERT: Special squawk {squawk} ({SPECIAL_SQUAWKS[squawk]}) detected on {flight}", "warning")
+        
+        except Exception as e:
+            log(f"Error extracting squawk from aircraft: {e}", "error")
+    
+    # Determine the current squawk to display
+    # Priority: special/custom squawks first, then by aircraft count
+    current_squawk_code = None
+    current_aircraft_list = []
+    
+    if special_squawks_detected:
+        # Prefer the special squawk with most aircraft
+        special_codes = [s["squawk"] for s in special_squawks_detected]
+        current_squawk_code = max(special_codes, key=lambda x: squawk_counts.get(x, 0))
+        current_aircraft_list = squawk_aircraft_map.get(current_squawk_code, [])
+    elif squawk_counts:
+        # Use the squawk with most aircraft
+        current_squawk_code = max(squawk_counts.keys(), key=lambda x: squawk_counts[x])
+        current_aircraft_list = squawk_aircraft_map.get(current_squawk_code, [])
+    
+    # Update global state
+    CURRENT_SQUAWK = current_squawk_code
+    CURRENT_SQUAWK_AIRCRAFT = current_aircraft_list
+    
+    # Format output
+    if current_squawk_code:
+        description = SPECIAL_SQUAWKS.get(current_squawk_code, "Squawk")
+        aircraft_list_str = ", ".join([f"{ac['flight']}" for ac in current_aircraft_list])
+        current_squawk_str = f"{current_squawk_code} - {description} ({squawk_counts[current_squawk_code]} aircraft: {aircraft_list_str})"
+    else:
+        current_squawk_str = "None"
+    
+    return {
+        "current_squawk": current_squawk_str,
+        "current_squawk_code": current_squawk_code,
+        "current_aircraft": current_aircraft_list,
+        "all_squawks": squawk_counts,
+        "special_squawks_detected": special_squawks_detected
+    }
+
+def _publish_squawk_discovery(mqtt_manager):
+    """Publish MQTT discovery for the current squawk entity"""
+    if not SQUAWK_TRACKING_ENABLED:
+        return
+    
+    log("Publishing squawk discovery")
+    
+    try:
+        discovery_topic = f"homeassistant/sensor/airplanes_live_current_squawk/config"
+        
+        payload = {
+            "name": "Current Squawk",
+            "state_topic": f"{MQTT_TOPIC}/current_squawk",
+            "unique_id": "airplanes_live_current_squawk",
+            "value_template": "{{ value_json.squawk_code }}",
+            "json_attributes_topic": f"{MQTT_TOPIC}/current_squawk",
+            "json_attributes_template": "{{ value_json }}",
+            "icon": "mdi:radio-tower",
+            "device": {
+                "identifiers": ["airplanes_live_device"],
+                "name": "Airplanes Live",
+                "manufacturer": "BenCos17",
+                "model": "Aircraft Tracker (Powered by airplanes.live)",
+                "sw_version": get_addon_version()
+            }
+        }
+        
+        mqtt_manager.publish(discovery_topic, json.dumps(payload), retain=True)
+        log("Published discovery for current squawk entity")
+    
+    except Exception as e:
+        log(f"Error publishing squawk discovery: {e}", "error")
+
+def publish_squawk_state(mqtt_manager, squawk_data):
+    """Publish the current active squawk state"""
+    if not SQUAWK_TRACKING_ENABLED:
+        return
+    
+    try:
+        squawk_code = squawk_data.get("current_squawk_code")
+        aircraft = squawk_data.get("current_aircraft", [])
+        
+        if squawk_code:
+            # Get tracking data
+            tracking_info = TRACKED_SQUAWKS.get(squawk_code, {})
+            
+            state_payload = {
+                "squawk_code": squawk_code,
+                "description": SPECIAL_SQUAWKS.get(squawk_code, "Squawk"),
+                "aircraft_count": len(aircraft),
+                "aircraft": [{"flight": ac["flight"], "hex": ac["hex"]} for ac in aircraft],
+                "aircraft_list": ",".join([ac["flight"] for ac in aircraft]),
+                "is_special": squawk_code in SPECIAL_SQUAWKS,
+                "first_seen": tracking_info.get("first_seen", "Unknown"),
+                "last_seen": datetime.now().isoformat()
+            }
+            
+            state_topic = f"{MQTT_TOPIC}/current_squawk"
+            mqtt_manager.publish(state_topic, json.dumps(state_payload), retain=True)
+            log(f"Published current squawk state: {squawk_code}")
+        else:
+            # No squawk active
+            state_payload = {
+                "squawk_code": "None",
+                "description": "No active squawk",
+                "aircraft_count": 0,
+                "aircraft": [],
+                "aircraft_list": "None",
+                "is_special": False,
+                "first_seen": "N/A",
+                "last_seen": datetime.now().isoformat()
+            }
+            
+            state_topic = f"{MQTT_TOPIC}/current_squawk"
+            mqtt_manager.publish(state_topic, json.dumps(state_payload), retain=True)
+            log("No active squawk to publish")
+    
+    except Exception as e:
+        log(f"Error publishing squawk state: {e}", "error")
+
+
 def publish_summary_data(mqtt_manager, aircraft_list):
     """Publish summary data to MQTT with improved error handling"""
     try:
@@ -442,12 +655,18 @@ def publish_summary_data(mqtt_manager, aircraft_list):
                 "fastest_air": 0,
                 "aircraft_types": "None",
                 "weather": "Unknown",
+                "current_squawk": "None",
                 "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         else:
             # Process aircraft data
             count = len(aircraft_list)
             log(f"Processing {count} aircraft for summary data")
+            
+            # Extract squawk information
+            squawk_data = extract_squawks(aircraft_list) if SQUAWK_TRACKING_ENABLED else {
+                "current_squawk": "None"
+            }
             
             # Find closest aircraft (lowest altitude)
             closest_lowest = "None"
@@ -621,6 +840,7 @@ def publish_summary_data(mqtt_manager, aircraft_list):
                 "fastest_air": fastest_air_kmh,
                 "aircraft_types": ", ".join(aircraft_types) if aircraft_types else "Unknown",
                 "weather": weather_info,
+                "current_squawk": squawk_data.get("current_squawk", "None"),
                 "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         
@@ -1139,8 +1359,15 @@ def main():
         while True:
             data = fetch_airplane_data()
             if mqtt_manager.is_connected():
+                # Extract squawk data first if needed
+                squawk_data = extract_squawks(data) if SQUAWK_TRACKING_ENABLED else {"current_squawk": "None"}
+                
                 publish_summary_data(mqtt_manager, data)
                 publish_individual_aircraft(mqtt_manager, data)
+                
+                # Publish current squawk state if enabled
+                if SQUAWK_TRACKING_ENABLED:
+                    publish_squawk_state(mqtt_manager, squawk_data)
                 # Publish feeder stats on its own cadence
                 if FEEDER_MONITOR_ENABLED:
                     now_ts = time.time()

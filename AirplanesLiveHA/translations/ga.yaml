@@ -64,6 +64,9 @@ options:
   feeder_stats_url: "URL Staitisticí an Fheithrileora"
   feeder_monitor_interval: "Eatramh Monatóireachta an Fheithrileora (soicindí)"
   feeder_filter_zero_sensors: "Folaigh braiteoirí le luach nialasach"
+  squawk_tracking_enabled: "Cumasaigh Rianúchán Squawk"
+  squawk_alert_special_codes: "Rabhadh ar Chóid Squawk Speisialta"
+  custom_squawks: "Cóid Squawk Saincheaptha le Faire ar"
 
 options_description:
   update_interval: "Cé chomh minic a bhailíonn tú sonraí nua ón API"
@@ -84,6 +87,9 @@ options_description:
   feeder_stats_url: "URL HTTP chuig JSON méadrachtaí an fheithrileora (m.sh. http://127.0.0.1:8080/metrics.json)"
   feeder_monitor_interval: "Cé chomh minic a iarrtar ar an gcríochphointe staidrimh an fheithrileora"
   feeder_filter_zero_sensors: "Nuair a chumasaítear é, ná cruthaigh braiteoirí do mhéadrachtaí slánuimhreacha atá 0"
+  squawk_tracking_enabled: "Rianúchán a bhualadh ar chóid transpondair eitleáin (codanna 4-dhigit) agus eintitis a chruthú dóibh"
+  squawk_alert_special_codes: "Rabhadh speisialta a chruthú do chódanna squawk éigeandála (7700 éigeandál, 7600 teip raidió, 7500 fuadach, etc.)"
+  custom_squawks: "Cóid squawk 4-dhigit saincheaptha a bhreiseáil chun faire a dhéanamh agus fógraí a fháil ar (m.sh. 1234). Taispeáinfear iad san eintitis squawk reatha"
 
 tracking_mode_options:
   summary: "Achoimre Amháin - Soláthraíonn staitisticí comhaireamh, eitleán is gaire, is airde, agus is tapúla"

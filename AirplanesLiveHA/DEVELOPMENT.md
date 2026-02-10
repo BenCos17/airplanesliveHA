@@ -290,13 +290,12 @@ mosquitto_sub -h localhost -t "test/airplanes/#" -v
 ## Future Enhancements
 
 ### Potential Features
-- Web interface for configuration
+- Web interface for configuration done
 - Historical data storage
 - Advanced filtering options
-- Alert system for specific aircraft
+- Alert system for specific aircraft 
 - Integration with other aviation APIs
 - Dashboard widgets
-- Mobile app support
 
 ### Performance Improvements
 - Async/await implementation

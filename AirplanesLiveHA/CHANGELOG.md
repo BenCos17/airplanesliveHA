@@ -1,3 +1,8 @@
+## 1.4.42
+- **FIXED**: Home Assistant MQTT `Erroneous JSON` errors by normalizing outgoing payloads to valid JSON before publish
+- **FIXED**: `Highest Aircraft` sensor state now publishes numeric altitude (or `null`) instead of formatted text to satisfy HA numeric sensor requirements
+- **IMPROVED**: Added `highest_aircraft` and `highest_display` summary fields to preserve readable aircraft context without breaking numeric sensor state
+
 ## 1.4.41
 - **IMPROVED**: Current Squawk entity state now displays full information: code, description, aircraft count, and aircraft list
 - **CHANGED**: Squawk state format updated to show: `1417 - Squawk (2 aircraft: UAL123, DAL456)` for better visibility

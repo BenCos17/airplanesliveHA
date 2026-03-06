@@ -1,5 +1,6 @@
 import os
 import json
+import ast
 import time
 import logging
 import requests
@@ -25,7 +26,7 @@ FEEDER_DEVICE_NAME = "Airplanes Live Feeder"
 # Cache addon version to avoid repeated file reads and warnings
 _CACHED_ADDON_VERSION: Optional[str] = None
 _ADDON_VERSION_WARNED: bool = False
-DEFAULT_ADDON_VERSION = "1.4.41"
+DEFAULT_ADDON_VERSION = "1.4.42"
 
 def log(msg: str, level: str = "info"):
     """Log message with specified level"""
@@ -650,7 +651,9 @@ def publish_summary_data(mqtt_manager, aircraft_list):
                 "count": 0,
                 "closest_lowest": "None",
                 "closest_distance": "None",
-                "highest": "None",
+                "highest": None,
+                "highest_aircraft": "None",
+                "highest_display": "None",
                 "fastest_ground": 0,
                 "fastest_air": 0,
                 "aircraft_types": "None",
@@ -835,7 +838,10 @@ def publish_summary_data(mqtt_manager, aircraft_list):
                 "count": count,
                 "closest_lowest": closest_lowest,
                 "closest_distance": closest_distance,
-                "highest": f"{highest_aircraft.get('flight', 'Unknown')} ({highest}ft)" if highest_aircraft else highest,
+                # Keep this numeric because the HA sensor uses unit_of_measurement=ft.
+                "highest": highest if highest_aircraft else None,
+                "highest_aircraft": highest_aircraft.get('flight', 'Unknown').strip() if highest_aircraft else "None",
+                "highest_display": f"{highest_aircraft.get('flight', 'Unknown').strip()} ({highest}ft)" if highest_aircraft else "None",
                 "fastest_ground": fastest_ground_kmh,
                 "fastest_air": fastest_air_kmh,
                 "aircraft_types": ", ".join(aircraft_types) if aircraft_types else "Unknown",
@@ -1191,12 +1197,29 @@ class MQTTManager:
             log(f"Processed {processed} queued messages")
     
     def publish(self, topic: str, payload: str, qos: int = None, retain: bool = None):
-        """Publish message with queuing support"""
+        """Publish message with queuing support and safe payload normalization."""
         # Use instance defaults if not specified
         if qos is None:
             qos = self.qos
         if retain is None:
             retain = self.retain
+
+        # Normalize payload to avoid publishing Python repr dicts (single quotes)
+        # that Home Assistant cannot parse as JSON.
+        if isinstance(payload, (dict, list)):
+            payload = json.dumps(payload)
+        elif not isinstance(payload, (str, bytes, bytearray)):
+            payload = str(payload)
+
+        # Best effort: convert accidental Python literal strings to JSON.
+        if isinstance(payload, str) and payload and payload[0] in "[{":
+            try:
+                json.loads(payload)
+            except json.JSONDecodeError:
+                try:
+                    payload = json.dumps(ast.literal_eval(payload))
+                except Exception:
+                    pass
             
         if self.connected and self.client:
             try:
@@ -1342,7 +1365,9 @@ def main():
                 "count": 0,
                 "closest_lowest": "None",
                 "closest_distance": "None",
-                "highest": "None",
+                "highest": None,
+                "highest_aircraft": "None",
+                "highest_display": "None",
                 "fastest_ground": 0,
                 "fastest_air": 0,
                 "aircraft_types": "None",

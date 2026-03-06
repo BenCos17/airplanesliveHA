@@ -2,6 +2,7 @@ import os
 import json
 import ast
 import time
+import re
 import logging
 import requests
 import paho.mqtt.client as mqtt
@@ -29,18 +30,43 @@ _CACHED_ADDON_VERSION: Optional[str] = None
 _ADDON_VERSION_WARNED: bool = False
 DEFAULT_ADDON_VERSION = "1.4.47"
 
+_SENSITIVE_LOG_PATTERNS = [
+    # key/value formats in dicts, JSON, YAML, and inline assignments
+    re.compile(
+        r'(?i)(["\']?(?:password|passphrase|secret|token|api[_-]?key|access[_-]?token|refresh[_-]?token|authorization|mqtt_password)["\']?\s*[:=]\s*)(["\']?)([^"\',}\s]+)(["\']?)'
+    ),
+    # URL credentials (e.g. https://user:password@example.com)
+    re.compile(r'(?i)(https?://[^\s/@:]+:)([^@\s/]+)(@)'),
+    # Bearer token values
+    re.compile(r'(?i)(\bBearer\s+)([A-Za-z0-9._\-~+/=]+)')
+]
+
+
+def _sanitize_log_message(message: Any) -> str:
+    """Mask common credential patterns before writing to logs."""
+    text = str(message)
+    for pattern in _SENSITIVE_LOG_PATTERNS:
+        if pattern.pattern.startswith('(?i)(https?://'):
+            text = pattern.sub(r'\1***REDACTED***\3', text)
+        elif pattern.pattern.startswith('(?i)(\\bBearer'):
+            text = pattern.sub(r'\1***REDACTED***', text)
+        else:
+            text = pattern.sub(r'\1\2***REDACTED***\4', text)
+    return text
+
 def log(msg: str, level: str = "info"):
     """Log message with specified level"""
+    safe_msg = _sanitize_log_message(msg)
     if level == "debug":
-        logger.debug(msg)
+        logger.debug(safe_msg)
     elif level == "warning":
-        logger.warning(msg)
+        logger.warning(safe_msg)
     elif level == "error":
-        logger.error(msg)
+        logger.error(safe_msg)
     elif level == "critical":
-        logger.critical(msg)
+        logger.critical(safe_msg)
     else:
-        logger.info(msg)
+        logger.info(safe_msg)
 
 def load_config():
     """Load configuration from Home Assistant options.json file"""
@@ -101,7 +127,7 @@ def get_addon_version():
 # Load configuration
 config = load_config()
 
-log(f"Raw config loaded: {config}")
+log(f"Configuration keys loaded: {sorted(config.keys())}")
 
 # Load config from options.json with fallback defaults
 API_TYPE = config.get("api_type", "unauthenticated")

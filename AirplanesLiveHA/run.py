@@ -29,6 +29,7 @@ DETAILED_DISCOVERY_PUBLISHED = set()
 _CACHED_ADDON_VERSION: Optional[str] = None
 _ADDON_VERSION_WARNED: bool = False
 DEFAULT_ADDON_VERSION = "1.4.47"
+LOG_EXACT_LOCATION = os.getenv("LOG_EXACT_LOCATION", "false").strip().lower() == "true"
 
 _SENSITIVE_LOG_PATTERNS = [
     # key/value formats in dicts, JSON, YAML, and inline assignments
@@ -53,6 +54,19 @@ def _sanitize_log_message(message: Any) -> str:
         else:
             text = pattern.sub(r'\1\2***REDACTED***\4', text)
     return text
+
+
+def _format_location_for_logs(lat_raw: Any, lon_raw: Any) -> str:
+    """Return a location string for logs; exact output requires explicit opt-in."""
+    try:
+        lat = float(lat_raw)
+        lon = float(lon_raw)
+    except (TypeError, ValueError):
+        return "unknown"
+
+    if LOG_EXACT_LOCATION:
+        return f"{lat:.5f},{lon:.5f}"
+    return f"{lat:.1f},{lon:.1f} (approx)"
 
 def log(msg: str, level: str = "info"):
     """Log message with specified level"""
@@ -80,10 +94,10 @@ def load_config():
         log(f"Configuration file {config_path} not found, using defaults", "warning")
         return {}
     except json.JSONDecodeError as e:
-        log(f"Error parsing configuration file: {e}, using defaults", "error")
+        log("Error parsing configuration file, using defaults", "error")
         return {}
     except Exception as e:
-        log(f"Error loading configuration: {e}, using defaults", "error")
+        log("Error loading configuration, using defaults", "error")
         return {}
 
 def get_addon_version():
@@ -127,7 +141,7 @@ def get_addon_version():
 # Load configuration
 config = load_config()
 
-log(f"Configuration keys loaded: {sorted(config.keys())}")
+log("Configuration loaded")
 
 # Load config from options.json with fallback defaults
 API_TYPE = config.get("api_type", "unauthenticated")
@@ -192,8 +206,8 @@ else:
         RADIUS_NMI = RADIUS
         log("Auto-configured for feeder API")
 
-log(f"Configuration loaded: API_TYPE={API_TYPE}, API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}km ({RADIUS_NMI:.1f}nm)")
-log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}, QoS: {MQTT_QOS}, Retain: {MQTT_RETAIN}, Tracking Mode: {TRACKING_MODE}")
+log(f"Runtime configuration initialized for location {_format_location_for_logs(LATITUDE, LONGITUDE)}")
+log("MQTT configuration initialized")
 
 def validate_config():
     """Validate configuration values"""
@@ -204,55 +218,55 @@ def validate_config():
     try:
         lat = float(LATITUDE)
         if not -90 <= lat <= 90:
-            errors.append(f"Latitude {lat} is out of range (-90 to 90)")
+            errors.append("Latitude is out of allowed range")
     except ValueError:
-        errors.append(f"Invalid latitude: {LATITUDE}")
+        errors.append("Latitude is not a valid number")
     
     try:
         lon = float(LONGITUDE)
         if not -180 <= lon <= 180:
-            errors.append(f"Longitude {lon} is out of range (-180 to 180)")
+            errors.append("Longitude is out of allowed range")
     except ValueError:
-        errors.append(f"Invalid longitude: {LONGITUDE}")
+        errors.append("Longitude is not a valid number")
     
     if not isinstance(RADIUS, (int, float)) or RADIUS <= 0:
-        errors.append(f"Invalid radius: {RADIUS} (must be positive number)")
+        errors.append("Radius must be a positive number")
     
     if not isinstance(UPDATE_INTERVAL, (int, float)) or UPDATE_INTERVAL < 1:
-        errors.append(f"Invalid update interval: {UPDATE_INTERVAL} (must be >= 1)")
+        errors.append("Update interval must be at least 1 second")
 
     if API_TYPE not in valid_api_types:
-        errors.append(f"Invalid api_type: {API_TYPE} (must be one of {sorted(valid_api_types)})")
+        errors.append("api_type must be one of the supported values")
 
     if TRACKING_MODE not in valid_tracking_modes:
-        errors.append(f"Invalid tracking_mode: {TRACKING_MODE} (must be one of {sorted(valid_tracking_modes)})")
+        errors.append("tracking_mode must be one of the supported values")
 
     if API_TYPE == "authenticated" and not API_KEY:
         errors.append("api_type is authenticated but api_key is empty")
     
     # Validate MQTT QoS
     if not isinstance(MQTT_QOS, int) or MQTT_QOS not in [0, 1, 2]:
-        errors.append(f"Invalid MQTT QoS: {MQTT_QOS} (must be 0, 1, or 2)")
+        errors.append("MQTT QoS must be 0, 1, or 2")
     
     # Validate MQTT retain
     if not isinstance(MQTT_RETAIN, bool):
-        errors.append(f"Invalid MQTT retain: {MQTT_RETAIN} (must be boolean)")
+        errors.append("MQTT retain must be a boolean")
     
     # Validate feeder monitor
     if FEEDER_MONITOR_ENABLED:
         if not isinstance(FEEDER_STATS_URL, str) or not FEEDER_STATS_URL:
             errors.append("Feeder monitor enabled but feeder_stats_url is invalid")
         if not isinstance(FEEDER_MONITOR_INTERVAL, (int, float)) or FEEDER_MONITOR_INTERVAL < 5:
-            errors.append(f"Invalid feeder_monitor_interval: {FEEDER_MONITOR_INTERVAL} (must be >= 5)")
+            errors.append("feeder_monitor_interval must be at least 5 seconds")
         if not isinstance(FEEDER_FILTER_ZERO_SENSORS, bool):
-            errors.append(f"Invalid feeder_filter_zero_sensors: {FEEDER_FILTER_ZERO_SENSORS} (must be boolean)")
+            errors.append("feeder_filter_zero_sensors must be a boolean")
 
     if not isinstance(CUSTOM_SQUAWKS, list):
         errors.append("custom_squawks must be a list")
     else:
         for code in CUSTOM_SQUAWKS:
             if not isinstance(code, str) or len(code) != 4 or not code.isdigit():
-                errors.append(f"Invalid custom squawk code: {code} (must be a 4-digit string)")
+                errors.append("Custom squawk codes must be 4-digit strings")
     
     if errors:
         for error in errors:
@@ -278,7 +292,7 @@ def fetch_airplane_data() -> Optional[List[Dict[str, Any]]]:
         headers = {}
     
     try:
-        log(f"Fetching data from: {url}")
+        log("Fetching data from configured API endpoint")
         resp = requests.get(url, headers=headers, timeout=15)
         resp.raise_for_status()
         data = resp.json()
@@ -1458,8 +1472,8 @@ def main():
         log("Configuration validation failed. Please check your settings.", "critical")
         return
     
-    log(f"Configuration: API_TYPE={API_TYPE}, API_URL={API_URL}, LAT={LATITUDE}, LON={LONGITUDE}, RADIUS={RADIUS}km ({RADIUS_NMI:.1f}nm)")
-    log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}")
+    log(f"Configuration validated and applied for location {_format_location_for_logs(LATITUDE, LONGITUDE)}")
+    log("MQTT connection settings applied")
     
     mqtt_manager = MQTTManager(MQTT_BROKER, MQTT_PORT, MQTT_TOPIC, MQTT_USERNAME, MQTT_PASSWORD)
     mqtt_manager.qos = MQTT_QOS

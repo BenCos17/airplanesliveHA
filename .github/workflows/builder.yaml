@@ -17,6 +17,8 @@ jobs:
   init:
     runs-on: ubuntu-latest
     name: Initialize builds
+    permissions:
+      contents: read
     outputs:
       changed_addons: ${{ steps.changed_addons.outputs.addons }}
       changed: ${{ steps.changed_addons.outputs.changed }}

@@ -1,0 +1,78 @@
+name: Release On Builder Success
+
+on:
+  workflow_run:
+    workflows: ["Builder"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Tag and publish release
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository at built commit
+        uses: actions/checkout@v6.0.2
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Read version from add-on config
+        id: version
+        run: |
+          version=$(grep -E '^version:\s*"[0-9]+\.[0-9]+\.[0-9]+"\s*$' AirplanesLiveHA/config.yaml | sed -E 's/version:\s*"([^"]+)"/\1/')
+          if [[ -z "$version" ]]; then
+            echo "Unable to read version from AirplanesLiveHA/config.yaml" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check if release already exists
+        id: exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create git tag
+        if: steps.exists.outputs.exists == 'false'
+        run: |
+          git tag "${{ steps.version.outputs.tag }}" "${{ github.event.workflow_run.head_sha }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Build release notes from changelog section
+        if: steps.exists.outputs.exists == 'false'
+        id: notes
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          notes=$(awk -v header="## $version" 'BEGIN{flag=0} $0==header{flag=1;next} /^## /{if(flag){exit}} flag{print}' AirplanesLiveHA/CHANGELOG.md)
+          if [[ -z "$notes" ]]; then
+            notes="Automated release for v$version"
+          fi
+          {
+            echo "notes<<EOF"
+            echo "$notes"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        if: steps.exists.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --notes "${{ steps.notes.outputs.notes }}" \
+            --target "${{ github.event.workflow_run.head_sha }}"

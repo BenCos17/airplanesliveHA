@@ -1,3 +1,6 @@
+## 1.4.43
+- fix hex warning and also drop unsupported systems from build
+
 ## 1.4.42
 - **FIXED**: Home Assistant MQTT `Erroneous JSON` errors by normalizing outgoing payloads to valid JSON before publish
 - **FIXED**: `Highest Aircraft` sensor state now publishes numeric altitude (or `null`) instead of formatted text to satisfy HA numeric sensor requirements

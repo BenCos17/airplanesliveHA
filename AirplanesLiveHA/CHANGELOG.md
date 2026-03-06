@@ -1,3 +1,6 @@
+## 1.4.45
+- fixing release system I hope
+
 ## 1.4.44
 - fix github actions for releasing stuff and also some minor issues in logs
 

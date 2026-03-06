@@ -23,6 +23,7 @@ FEEDER_DISCOVERY_DONE = False
 FEEDER_DYNAMIC_DISCOVERY_DONE = False
 FEEDER_DEVICE_ID = "airplanes_live_feeder_device"
 FEEDER_DEVICE_NAME = "Airplanes Live Feeder"
+DETAILED_DISCOVERY_PUBLISHED = set()
 # Cache addon version to avoid repeated file reads and warnings
 _CACHED_ADDON_VERSION: Optional[str] = None
 _ADDON_VERSION_WARNED: bool = False
@@ -171,6 +172,8 @@ log(f"MQTT: {MQTT_BROKER}:{MQTT_PORT}, Topic: {MQTT_TOPIC}, QoS: {MQTT_QOS}, Ret
 def validate_config():
     """Validate configuration values"""
     errors = []
+    valid_api_types = {"unauthenticated", "authenticated"}
+    valid_tracking_modes = {"summary", "detailed", "both"}
     
     try:
         lat = float(LATITUDE)
@@ -191,6 +194,15 @@ def validate_config():
     
     if not isinstance(UPDATE_INTERVAL, (int, float)) or UPDATE_INTERVAL < 1:
         errors.append(f"Invalid update interval: {UPDATE_INTERVAL} (must be >= 1)")
+
+    if API_TYPE not in valid_api_types:
+        errors.append(f"Invalid api_type: {API_TYPE} (must be one of {sorted(valid_api_types)})")
+
+    if TRACKING_MODE not in valid_tracking_modes:
+        errors.append(f"Invalid tracking_mode: {TRACKING_MODE} (must be one of {sorted(valid_tracking_modes)})")
+
+    if API_TYPE == "authenticated" and not API_KEY:
+        errors.append("api_type is authenticated but api_key is empty")
     
     # Validate MQTT QoS
     if not isinstance(MQTT_QOS, int) or MQTT_QOS not in [0, 1, 2]:
@@ -208,6 +220,13 @@ def validate_config():
             errors.append(f"Invalid feeder_monitor_interval: {FEEDER_MONITOR_INTERVAL} (must be >= 5)")
         if not isinstance(FEEDER_FILTER_ZERO_SENSORS, bool):
             errors.append(f"Invalid feeder_filter_zero_sensors: {FEEDER_FILTER_ZERO_SENSORS} (must be boolean)")
+
+    if not isinstance(CUSTOM_SQUAWKS, list):
+        errors.append("custom_squawks must be a list")
+    else:
+        for code in CUSTOM_SQUAWKS:
+            if not isinstance(code, str) or len(code) != 4 or not code.isdigit():
+                errors.append(f"Invalid custom squawk code: {code} (must be a 4-digit string)")
     
     if errors:
         for error in errors:
@@ -425,6 +444,50 @@ def publish_individual_aircraft(mqtt_manager, aircraft_list):
     
     if not aircraft_list or not isinstance(aircraft_list, list):
         return
+
+    sensor_defs = [
+        {
+            "key": "flight",
+            "name": "Flight",
+            "value_template": "{{ value_json.flight }}",
+            "icon": "mdi:airplane",
+        },
+        {
+            "key": "altitude",
+            "name": "Altitude",
+            "value_template": "{{ value_json.altitude }}",
+            "unit": "ft",
+        },
+        {
+            "key": "speed",
+            "name": "Speed",
+            "value_template": "{{ value_json.speed }}",
+            "unit": "kn",
+            "device_class": "speed",
+        },
+        {
+            "key": "track",
+            "name": "Track",
+            "value_template": "{{ value_json.track }}",
+            "unit": "deg",
+        },
+        {
+            "key": "aircraft_type",
+            "name": "Aircraft Type",
+            "value_template": "{{ value_json.aircraft_type }}",
+        },
+        {
+            "key": "registration",
+            "name": "Registration",
+            "value_template": "{{ value_json.registration }}",
+        },
+        {
+            "key": "position",
+            "name": "Position",
+            "value_template": "{{ value_json.position }}",
+            "icon": "mdi:crosshairs-gps",
+        },
+    ]
     
     log(f"Publishing individual aircraft data for {len(aircraft_list)} aircraft")
     
@@ -439,33 +502,48 @@ def publish_individual_aircraft(mqtt_manager, aircraft_list):
             state_topic = f"{MQTT_TOPIC}/aircraft/{hex_code}/state"
             state_payload = {
                 "hex": hex_code,
-                "flight": aircraft.get('flight', 'Unknown'),
+                "flight": (aircraft.get('flight') or 'Unknown').strip(),
                 "altitude": aircraft.get('alt_baro'),
                 "speed": aircraft.get('gs') or aircraft.get('tas') or aircraft.get('ias'),  # Use correct speed fields
                 "track": aircraft.get('track'),
                 "lat": aircraft.get('lat'),
                 "lon": aircraft.get('lon'),
+                "position": f"{aircraft.get('lat')}, {aircraft.get('lon')}" if aircraft.get('lat') is not None and aircraft.get('lon') is not None else "Unknown",
+                "aircraft_type": aircraft.get('t', 'Unknown'),
+                "registration": aircraft.get('r', 'Unknown'),
                 "squawk": aircraft.get('squawk', 'Unknown'),
                 "last_seen": datetime.now().isoformat()
             }
             
             mqtt_manager.publish(state_topic, json.dumps(state_payload), retain=True)
             
-            # Publish discovery for individual aircraft
-            discovery_topic = f"homeassistant/sensor/airplane_{hex_code}_info/config"
-            discovery_payload = {
-                "name": f"Aircraft {hex_code}",
-                "value_template": "{{ value_json.flight }}",
-                "device": {
-                    "identifiers": [f"airplane_{hex_code}"],
-                    "name": f"Aircraft {hex_code}",
-                    "manufacturer": "Unknown",
-                    "model": aircraft.get('t', 'Unknown'),
-                    "via_device": "airplanes_live_device"
-                }
-            }
-            
-            mqtt_manager.publish(discovery_topic, json.dumps(discovery_payload), retain=True)
+            # Publish discovery once per aircraft hex for detailed sensors.
+            if hex_code not in DETAILED_DISCOVERY_PUBLISHED:
+                for sensor in sensor_defs:
+                    discovery_topic = f"homeassistant/sensor/airplane_{hex_code}_{sensor['key']}/config"
+                    discovery_payload = {
+                        "name": f"Aircraft {hex_code} {sensor['name']}",
+                        "state_topic": state_topic,
+                        "unique_id": f"airplane_{hex_code}_{sensor['key']}",
+                        "value_template": sensor["value_template"],
+                        "json_attributes_topic": state_topic,
+                        "json_attributes_template": "{{ value_json }}",
+                        "device": {
+                            "identifiers": [f"airplane_{hex_code}"],
+                            "name": f"Aircraft {hex_code}",
+                            "manufacturer": "Unknown",
+                            "model": aircraft.get('t', 'Unknown'),
+                            "via_device": "airplanes_live_device"
+                        }
+                    }
+                    if sensor.get("unit"):
+                        discovery_payload["unit_of_measurement"] = sensor["unit"]
+                    if sensor.get("device_class"):
+                        discovery_payload["device_class"] = sensor["device_class"]
+                    if sensor.get("icon"):
+                        discovery_payload["icon"] = sensor["icon"]
+                    mqtt_manager.publish(discovery_topic, json.dumps(discovery_payload), retain=True)
+                DETAILED_DISCOVERY_PUBLISHED.add(hex_code)
             
         except Exception as e:
             log(f"Error publishing individual aircraft {hex_code}: {e}", "error")
@@ -643,7 +721,7 @@ def publish_squawk_state(mqtt_manager, squawk_data):
         log(f"Error publishing squawk state: {e}", "error")
 
 
-def publish_summary_data(mqtt_manager, aircraft_list):
+def publish_summary_data(mqtt_manager, aircraft_list, squawk_data: Optional[Dict[str, Any]] = None):
     """Publish summary data to MQTT with improved error handling"""
     try:
         if not aircraft_list or not isinstance(aircraft_list, list):
@@ -668,9 +746,11 @@ def publish_summary_data(mqtt_manager, aircraft_list):
             log(f"Processing {count} aircraft for summary data")
             
             # Extract squawk information
-            squawk_data = extract_squawks(aircraft_list) if SQUAWK_TRACKING_ENABLED else {
+            squawk_data = squawk_data if squawk_data is not None else (
+                extract_squawks(aircraft_list) if SQUAWK_TRACKING_ENABLED else {
                 "current_squawk": "None"
-            }
+                }
+            )
             
             # Find closest aircraft (lowest altitude)
             closest_lowest = "None"
@@ -1056,7 +1136,7 @@ class MQTTManager:
         self.topic = topic
         self.username = username
         self.password = password
-        self.client = None
+        self.client: Optional[mqtt.Client] = None
         self.connected = False
         self.reconnect_delay = 1
         self.max_reconnect_delay = 300  # 5 minutes
@@ -1069,11 +1149,15 @@ class MQTTManager:
         
     def create_client(self):
         """Create and configure MQTT client"""
-        # Use modern callback API to avoid deprecation warnings on paho-mqtt >= 2.0
+        # Use modern callback API when available; keep compatibility with older paho versions.
         try:
-            self.client = mqtt.Client(protocol=mqtt.MQTTv5, callback_api_version=mqtt.CallbackAPIVersion.V5)
-        except Exception:
-            # Fallback for older paho versions without CallbackAPIVersion
+            callback_api_enum = getattr(mqtt, "CallbackAPIVersion", None)
+            version2 = getattr(callback_api_enum, "VERSION2", None) if callback_api_enum else None
+            if version2 is not None:
+                self.client = mqtt.Client(callback_api_version=version2, protocol=mqtt.MQTTv5)
+            else:
+                self.client = mqtt.Client(protocol=mqtt.MQTTv5)
+        except TypeError:
             self.client = mqtt.Client(protocol=mqtt.MQTTv5)
         
         # Set callbacks
@@ -1163,7 +1247,7 @@ class MQTTManager:
     
     def _publish_status(self, status: str, reason: str):
         """Publish connection status"""
-        if not self.connected:
+        if not self.connected or self.client is None:
             return
             
         status_topic = f"{self.topic}/status"
@@ -1182,7 +1266,7 @@ class MQTTManager:
     
     def _process_message_queue(self):
         """Process any queued messages when reconnecting"""
-        if not self.connected:
+        if not self.connected or self.client is None:
             return
             
         processed = 0
@@ -1197,7 +1281,7 @@ class MQTTManager:
         if processed > 0:
             log(f"Processed {processed} queued messages")
     
-    def publish(self, topic: str, payload: str, qos: int = None, retain: bool = None):
+    def publish(self, topic: str, payload: Any, qos: Optional[int] = None, retain: Optional[bool] = None):
         """Publish message with queuing support and safe payload normalization."""
         # Use instance defaults if not specified
         if qos is None:
@@ -1222,7 +1306,7 @@ class MQTTManager:
                 except Exception:
                     pass
             
-        if self.connected and self.client:
+        if self.connected and self.client is not None:
             try:
                 result = self.client.publish(topic, payload, qos=qos, retain=retain)
                 if result.rc != mqtt.MQTT_ERR_SUCCESS:
@@ -1243,6 +1327,11 @@ class MQTTManager:
         """Connect to MQTT broker with retry logic"""
         if not self.client:
             self.create_client()
+        if self.client is None:
+            log("Failed to initialize MQTT client", "critical")
+            return False
+
+        client = self.client
         
         max_retries = 10
         retry_count = 0
@@ -1252,8 +1341,8 @@ class MQTTManager:
                 log(f"Connecting to MQTT broker {self.broker}:{self.port} (attempt {retry_count + 1}/{max_retries})")
                 
                 with self.connection_lock:
-                    self.client.connect(self.broker, self.port, 60)
-                    self.client.loop_start()
+                    client.connect(self.broker, self.port, 60)
+                    client.loop_start()
                 
                 # Wait for connection callback
                 wait_time = 0
@@ -1266,7 +1355,7 @@ class MQTTManager:
                     return True
                 else:
                     log("MQTT connection timeout - retrying...", "warning")
-                    self.client.loop_stop()
+                    client.loop_stop()
                     retry_count += 1
                     
                     # Exponential backoff
@@ -1303,7 +1392,7 @@ class MQTTManager:
     
     def is_connected(self) -> bool:
         """Check if MQTT client is connected"""
-        return self.connected and self.client and self.client.is_connected()
+        return bool(self.connected and self.client is not None and self.client.is_connected())
     
     def send_heartbeat(self):
         """Send heartbeat to monitor connection health"""
@@ -1373,6 +1462,7 @@ def main():
                 "fastest_air": 0,
                 "aircraft_types": "None",
                 "weather": "Unknown",
+                "current_squawk": "None",
                 "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
             mqtt_manager.publish(f"{MQTT_TOPIC}/summary", json.dumps(initial_data), retain=True)
@@ -1388,7 +1478,7 @@ def main():
                 # Extract squawk data first if needed
                 squawk_data = extract_squawks(data) if SQUAWK_TRACKING_ENABLED else {"current_squawk": "None"}
                 
-                publish_summary_data(mqtt_manager, data)
+                publish_summary_data(mqtt_manager, data, squawk_data)
                 publish_individual_aircraft(mqtt_manager, data)
                 
                 # Publish current squawk state if enabled

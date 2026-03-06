@@ -87,8 +87,8 @@ Creates a single device with these sensors:
 - **Lowest Altitude Aircraft**: Flight and altitude of lowest aircraft
 - **Closest Distance Aircraft**: Flight and distance in km
 - **Highest Aircraft**: Flight and altitude in feet
-- **Fastest Aircraft (Ground)**: Highest ground speed in knots
-- **Fastest Aircraft (Air)**: Highest air speed in knots
+- **Fastest Aircraft (Ground)**: Highest ground speed in km/h
+- **Fastest Aircraft (Air)**: Highest air speed in km/h
 - **Aircraft Types**: Unique aircraft types currently in range
 - **Weather Conditions**: Wind and temperature summary
 - **Last Update**: Timestamp of last data update
@@ -115,7 +115,7 @@ The add-on publishes to the following MQTT topics:
 
 #### Individual Aircraft (Detailed Mode)
 - `airplanes/live/aircraft/<hex>/state` - Individual aircraft state data
-- `homeassistant/sensor/airplane_<hex>_info/config` - Home Assistant discovery messages
+- `homeassistant/sensor/airplane_<hex>_<field>/config` - Home Assistant discovery messages (flight, altitude, speed, track, aircraft_type, registration, position)
 
 #### Discovery
 - `homeassistant/sensor/airplanes_live_<attribute>/config` - Home Assistant discovery messages

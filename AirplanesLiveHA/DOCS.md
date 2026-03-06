@@ -16,14 +16,14 @@ The Airplanes Live API Add-on integrates with [airplanes.live](https://airplanes
 1. **Aircraft Count** - Total aircraft in range
 2. **Closest Aircraft** - Flight number and altitude of lowest aircraft
 3. **Highest Aircraft** - Maximum altitude in feet
-4. **Fastest Aircraft (Ground)** - Highest ground speed in knots
-5. **Fastest Aircraft (Air)** - Highest air speed in knots
+4. **Fastest Aircraft (Ground)** - Highest ground speed in km/h
+5. **Fastest Aircraft (Air)** - Highest air speed in km/h
 6. **Aircraft Types** - All aircraft types currently in range
 7. **Weather Conditions** - Wind direction, speed, and temperature
 8. **Last Update** - Timestamp of last data update
 
 ### Detailed Mode Sensors
-- Flight number, altitude, speed, track, position
+- Flight number, altitude, speed, track, aircraft type, registration, position
 - Individual entity for each aircraft detected
 - Device grouping for better organization
 

@@ -1,3 +1,6 @@
+## 1.4.44
+- fix github actions for releasing stuff and also some minor issues in logs
+
 ## 1.4.43
 - fix hex warning and also drop unsupported systems from build
 

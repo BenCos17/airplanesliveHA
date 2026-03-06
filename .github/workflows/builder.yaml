@@ -11,6 +11,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   init:
@@ -33,6 +34,24 @@ jobs:
       - name: Get changed add-ons
         id: changed_addons
         run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            declare -a all_addons
+            for addon in ${{ steps.addons.outputs.addons }}; do
+              all_addons+=("\"${addon}\",")
+            done
+
+            changed=$(echo ${all_addons[@]} | rev | cut -c 2- | rev)
+            if [[ -n ${changed} ]]; then
+              echo "workflow_dispatch detected - building all add-ons: $changed"
+              echo "changed=true" >> $GITHUB_OUTPUT
+              echo "addons=[$changed]" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            echo "No add-ons found to build"
+            exit 0
+          fi
+
           declare -a changed_addons
           for addon in ${{ steps.addons.outputs.addons }}; do
             if [[ "${{ steps.changed_files.outputs.all }}" =~ $addon ]]; then

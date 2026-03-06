@@ -20,6 +20,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   bump:
@@ -44,6 +45,7 @@ jobs:
             --notes "${{ github.event.inputs.notes }}"
 
       - name: Commit changes
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -56,10 +58,24 @@ jobs:
             AirplanesLiveHA/CHANGELOG.md
           if git diff --cached --quiet; then
             echo "No changes to commit"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git commit -m "chore(release): bump version and changelog"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Push changes
+        if: steps.commit.outputs.changed == 'true'
         run: |
           git push
+
+      - name: Trigger Builder workflow
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -sS -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/builder.yaml/dispatches" \
+            -d '{"ref":"${{ github.ref_name }}"}'

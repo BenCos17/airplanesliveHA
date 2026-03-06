@@ -429,6 +429,7 @@ def publish_individual_aircraft(mqtt_manager, aircraft_list):
     log(f"Publishing individual aircraft data for {len(aircraft_list)} aircraft")
     
     for aircraft in aircraft_list:
+        hex_code = 'unknown'
         try:
             hex_code = aircraft.get('hex', 'unknown')
             if hex_code == 'unknown':

@@ -1,3 +1,6 @@
+## 1.4.47
+- minor fixes in the codebase
+
 ## 1.4.46
 - fix mistakes
 

@@ -6,6 +6,7 @@ This Home Assistant add-on fetches live airplane tracking data from the [Airplan
 API is gone for now....thanks people who just abused it 
 if you need access email contact@airplanes.live 
 my code does support an api key but if you do setup a feeder for it as people who are using my addon should have already done....
+Not saying the people who used this addon were abusing it but the large companies etc 
 <img width="1084" height="426" alt="image" src="https://github.com/user-attachments/assets/52b7a837-6ed1-4fc5-a894-82c13f79b33f" />
 
 

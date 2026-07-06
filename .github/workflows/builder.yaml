@@ -127,13 +127,24 @@ jobs:
 
 
 
+      - name: Prepare Image Metadata
+        id: meta
+        run: |
+          # 1. Lowercase the owner
+          echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+          
+          # 2. Clean the image name: remove '{arch}' and lowercase
+          clean_image=$(echo "${{ steps.check.outputs.image }}" | sed -E 's/_{?arch}?//g' | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_LC=$clean_image" >> $GITHUB_ENV
+
       - name: Build and push Add-on
         if: steps.check.outputs.build_arch == 'true'
         uses: docker/build-push-action@v6
         with:
           context: ./${{ matrix.addon }}
           push: ${{ env.BUILD_ARGS != '--test' }}
-          platforms: linux/${{ matrix.arch == 'amd64' && 'amd64' || 'arm64' }}
-          tags: ghcr.io/${{ github.repository_owner }}/${{ steps.check.outputs.image }}:${{ matrix.arch }}
+          platforms: linux/${{ matrix.arch }}
+          # Use the sanitized environment variables here
+          tags: ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_LC }}:${{ matrix.arch }}
           build-args: |
             BUILD_FROM=ghcr.io/hassio-addons/base:18.1.1

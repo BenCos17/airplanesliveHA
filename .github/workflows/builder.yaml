@@ -144,17 +144,17 @@ jobs:
           # 2. Get the raw image name from previous step
           RAW_IMAGE="${{ steps.check.outputs.image }}"
           
-          # 3. Clean the image name:
-          # If it contains _{arch}, remove that part. Otherwise use the raw value.
-          # We force lowercase to be safe.
-          CLEAN_IMAGE=$(echo "$RAW_IMAGE" | sed 's/_{arch}//g' | sed 's/_{arch}//g' | tr '[:upper:]' '[:lower:]')
-          
-          # Fallback if CLEAN_IMAGE is empty
+          # 3. Clean the image name
+          CLEAN_IMAGE=$(echo "$RAW_IMAGE" | sed 's/_{arch}//g' | tr '[:upper:]' '[:lower:]')
           if [[ -z "$CLEAN_IMAGE" || "$CLEAN_IMAGE" == "null" ]]; then
             CLEAN_IMAGE="${{ matrix.addon }}"
           fi
-          
           echo "IMAGE_LC=$CLEAN_IMAGE" >> $GITHUB_ENV
+
+          # 4. Clean the version (Remove quotes if present)
+          RAW_VERSION="${{ steps.info.outputs.version }}"
+          VERSION_CLEAN=$(echo "$RAW_VERSION" | tr -d '"')
+          echo "VERSION_CLEAN=$VERSION_CLEAN" >> $GITHUB_ENV
 
 
 
@@ -166,6 +166,6 @@ jobs:
           context: ./${{ matrix.addon }}
           push: ${{ env.BUILD_ARGS != '--test' }}
           platforms: linux/${{ matrix.arch }}
-          tags: ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_LC }}_${{ matrix.arch }}:${{ steps.info.outputs.version }}
+          tags: ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_LC }}_${{ matrix.arch }}:${{ env.VERSION_CLEAN }}
           build-args: |
             BUILD_FROM=ghcr.io/hassio-addons/base:18.1.1

@@ -157,6 +157,8 @@ jobs:
           echo "IMAGE_LC=$CLEAN_IMAGE" >> $GITHUB_ENV
 
 
+
+
       - name: Build and push Add-on
         if: steps.check.outputs.build_arch == 'true'
         uses: docker/build-push-action@v6
@@ -164,7 +166,6 @@ jobs:
           context: ./${{ matrix.addon }}
           push: ${{ env.BUILD_ARGS != '--test' }}
           platforms: linux/${{ matrix.arch }}
-          # Use the sanitized environment variables here
-          tags: ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_LC }}:${{ matrix.arch }}
+          tags: ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_LC }}_${{ matrix.arch }}:${{ steps.info.outputs.version }}
           build-args: |
             BUILD_FROM=ghcr.io/hassio-addons/base:18.1.1

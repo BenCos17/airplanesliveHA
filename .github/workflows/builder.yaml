@@ -129,26 +129,25 @@ jobs:
 
 
 
+
+
       - name: Prepare Image Metadata
         id: meta
         run: |
           # 1. Lowercase the owner
           echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
           
-          # 2. Extract and sanitize image name
+          # 2. Get the raw image name, fallback to matrix.addon if empty
           RAW_IMAGE="${{ steps.check.outputs.image }}"
-          
           if [[ -z "$RAW_IMAGE" || "$RAW_IMAGE" == "null" ]]; then
-            echo "Error: Image name is empty or null. Check your config.yaml."
-            exit 1
+            echo "Warning: Image name empty. Using fallback: ${{ matrix.addon }}"
+            CLEAN_IMAGE="${{ matrix.addon }}"
+          else
+            CLEAN_IMAGE=$(echo "$RAW_IMAGE" | sed -E 's/_{?arch}?//g' | tr '[:upper:]' '[:lower:]')
           fi
           
-          # Remove '{arch}' suffix and convert to lowercase
-          CLEAN_IMAGE=$(echo "$RAW_IMAGE" | sed -E 's/_{?arch}?//g' | tr '[:upper:]' '[:lower:]')
-          
           echo "IMAGE_LC=$CLEAN_IMAGE" >> $GITHUB_ENV
-          echo "DEBUG: Final Tag will be: ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/$CLEAN_IMAGE:${{ matrix.arch }}"
-
+          echo "Final repository name: $CLEAN_IMAGE"
 
 
       - name: Build and push Add-on

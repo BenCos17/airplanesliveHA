@@ -127,16 +127,28 @@ jobs:
 
 
 
+
+
       - name: Prepare Image Metadata
         id: meta
         run: |
           # 1. Lowercase the owner
           echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
           
-          # 2. Clean the image name: remove '{arch}' and lowercase
-          clean_image=$(echo "${{ steps.check.outputs.image }}" | sed -E 's/_{?arch}?//g' | tr '[:upper:]' '[:lower:]')
-          echo "IMAGE_LC=$clean_image" >> $GITHUB_ENV
+          # 2. Get the raw image name
+          RAW_IMAGE="${{ steps.check.outputs.image }}"
+          echo "Raw image name: $RAW_IMAGE"
+          
+          # 3. Clean the image name (strip {arch} and lowercase)
+          # Use a default value 'app' if the image name is empty
+          CLEAN_IMAGE=$(echo "$RAW_IMAGE" | sed -E 's/_{?arch}?//g' | tr '[:upper:]' '[:lower:]')
+          CLEAN_IMAGE=${CLEAN_IMAGE:-airplanes_live_api}
+          
+          echo "IMAGE_LC=$CLEAN_IMAGE" >> $GITHUB_ENV
+          echo "Using image name: $CLEAN_IMAGE"
 
+
+          
       - name: Build and push Add-on
         if: steps.check.outputs.build_arch == 'true'
         uses: docker/build-push-action@v6

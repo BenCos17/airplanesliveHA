@@ -125,14 +125,15 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build ${{ matrix.addon }} add-on
+
+
+      - name: Build and push Add-on
         if: steps.check.outputs.build_arch == 'true'
-        uses: home-assistant/builder@2026.06.0
+        uses: docker/build-push-action@v6
         with:
-          args: |
-            ${{ env.BUILD_ARGS }} \
-            --${{ matrix.arch }} \
-            --target /data/${{ matrix.addon }} \
-            --image "${{ steps.check.outputs.image }}" \
-            --docker-hub "ghcr.io/${{ github.repository_owner }}" \
-            --addon
+          context: ./${{ matrix.addon }}
+          push: ${{ env.BUILD_ARGS != '--test' }}
+          platforms: linux/${{ matrix.arch == 'amd64' && 'amd64' || 'arm64' }}
+          tags: ghcr.io/${{ github.repository_owner }}/${{ steps.check.outputs.image }}:${{ matrix.arch }}
+          build-args: |
+            BUILD_FROM=ghcr.io/hassio-addons/base:18.1.1

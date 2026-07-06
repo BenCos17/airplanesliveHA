@@ -131,23 +131,27 @@ jobs:
 
 
 
+
       - name: Prepare Image Metadata
         id: meta
         run: |
           # 1. Lowercase the owner
           echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
           
-          # 2. Get the raw image name, fallback to matrix.addon if empty
+          # 2. Get the raw image name from previous step
           RAW_IMAGE="${{ steps.check.outputs.image }}"
-          if [[ -z "$RAW_IMAGE" || "$RAW_IMAGE" == "null" ]]; then
-            echo "Warning: Image name empty. Using fallback: ${{ matrix.addon }}"
+          
+          # 3. Clean the image name:
+          # If it contains _{arch}, remove that part. Otherwise use the raw value.
+          # We force lowercase to be safe.
+          CLEAN_IMAGE=$(echo "$RAW_IMAGE" | sed 's/_{arch}//g' | sed 's/_{arch}//g' | tr '[:upper:]' '[:lower:]')
+          
+          # Fallback if CLEAN_IMAGE is empty
+          if [[ -z "$CLEAN_IMAGE" || "$CLEAN_IMAGE" == "null" ]]; then
             CLEAN_IMAGE="${{ matrix.addon }}"
-          else
-            CLEAN_IMAGE=$(echo "$RAW_IMAGE" | sed -E 's/_{?arch}?//g' | tr '[:upper:]' '[:lower:]')
           fi
           
           echo "IMAGE_LC=$CLEAN_IMAGE" >> $GITHUB_ENV
-          echo "Final repository name: $CLEAN_IMAGE"
 
 
       - name: Build and push Add-on

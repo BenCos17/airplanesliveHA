@@ -135,26 +135,25 @@ jobs:
 
 
 
+
+
+
       - name: Prepare Image Metadata
         id: meta
         run: |
-          # 1. Lowercase the owner
           echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
           
-          # 2. Get the raw image name from previous step
+          # Clean image name
           RAW_IMAGE="${{ steps.check.outputs.image }}"
-          
-          # 3. Clean the image name
           CLEAN_IMAGE=$(echo "$RAW_IMAGE" | sed 's/_{arch}//g' | tr '[:upper:]' '[:lower:]')
-          if [[ -z "$CLEAN_IMAGE" || "$CLEAN_IMAGE" == "null" ]]; then
-            CLEAN_IMAGE="${{ matrix.addon }}"
-          fi
+          [[ -z "$CLEAN_IMAGE" || "$CLEAN_IMAGE" == "null" ]] && CLEAN_IMAGE="${{ matrix.addon }}"
           echo "IMAGE_LC=$CLEAN_IMAGE" >> $GITHUB_ENV
 
-          # 4. Clean the version (Remove quotes if present)
-          RAW_VERSION="${{ steps.info.outputs.version }}"
-          VERSION_CLEAN=$(echo "$RAW_VERSION" | tr -d '"')
+          # Robustly clean version: remove all quotes and backslashes
+          VERSION_CLEAN=$(echo "${{ steps.info.outputs.version }}" | sed 's/["\\]//g')
           echo "VERSION_CLEAN=$VERSION_CLEAN" >> $GITHUB_ENV
+
+
 
 
 
@@ -166,6 +165,7 @@ jobs:
           context: ./${{ matrix.addon }}
           push: ${{ env.BUILD_ARGS != '--test' }}
           platforms: linux/${{ matrix.arch }}
+          # Ensure there are no extra quotes here
           tags: ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_LC }}_${{ matrix.arch }}:${{ env.VERSION_CLEAN }}
           build-args: |
             BUILD_FROM=ghcr.io/hassio-addons/base:18.1.1

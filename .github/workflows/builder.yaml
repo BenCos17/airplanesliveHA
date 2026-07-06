@@ -93,7 +93,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7.0.0
-
+:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        
       - name: Get information
         id: info
         uses: home-assistant/actions/helpers/info@master

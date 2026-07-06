@@ -1,3 +1,6 @@
+## 1.4.49
+- Automated release version bump
+
 ## 1.4.47
 - minor fixes in the codebase
 

@@ -1,3 +1,6 @@
+## 1.4.51
+- Bump docker/build-push-action from 6 to 7 #31
+
 ## 1.4.50
 - Automated release version bump
 

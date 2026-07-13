@@ -28,7 +28,7 @@ DETAILED_DISCOVERY_PUBLISHED = set()
 # Cache addon version to avoid repeated file reads and warnings
 _CACHED_ADDON_VERSION: Optional[str] = None
 _ADDON_VERSION_WARNED: bool = False
-DEFAULT_ADDON_VERSION = "1.4.50"
+DEFAULT_ADDON_VERSION = "1.4.51"
 LOG_EXACT_LOCATION = os.getenv("LOG_EXACT_LOCATION", "false").strip().lower() == "true"
 
 _SENSITIVE_LOG_PATTERNS = [

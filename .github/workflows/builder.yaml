@@ -160,7 +160,7 @@ jobs:
 
       - name: Build and push Add-on
         if: steps.check.outputs.build_arch == 'true'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./${{ matrix.addon }}
           push: ${{ env.BUILD_ARGS != '--test' }}

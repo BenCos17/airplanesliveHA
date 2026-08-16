@@ -5,6 +5,47 @@ This Home Assistant add-on fetches live airplane tracking data from the [Airplan
 ## README
 API is gone for now....thanks people who just abused it 
 if you need access email contact@airplanes.live 
+
+```
+This is not an AI generated reply. This message is going out to everyone using the API.
+
+If you are a feeder, you can access the api from same IP as the feeder. 
+
+If you are not currently contributing, there is no better time to get started.
+https://airplanes.live/get-started/
+
+Thank you for your support.
+
+Due to bot abuse and Claude code, this GitHub, and many others, the free API has been taken down in order to prevent our eventual bankruptcy. We have been discussing this in our Discord for a month or more.
+
+Agentic AI and the advent of apps and scrapers have made hosting costs unsustainable. It is further compounded by the AI boom increasing our hosting costs nearly 300% in 2 years (18 months actually).
+
+The Airplanes.Live API serves over 2 billion requests a week and growing.
+We exceeded monthly hosting egress bandwidth in 4 days this month.
+
+Our goals:
+Airplanes.Live needs to become sustainable long term.
+We do not currently have ads.
+We do not filter or remove traffic.
+We are owned by enthusiasts and the community.
+We ask anyone using our API data to host a feeder and sponsor their usage.
+
+If you are an app, business, website, or otherwise using data in excess, sponsorship is for you.  
+
+You will need to purchase a sponsorship and then let us know.
+
+$25/mo Sponsorship
+https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-85F648460J888405RNFZ2FJI
+
+$50/mo Developer Sponsorship
+https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-841002451W511233GM64MC4A
+
+FYI:
+We built ADSBexchange before the sale to the private equity firm.
+We refused to sell out and spent 2 years fighting for our intellectual property and that of the contracted developers.
+The contracted devs were paid $2.6M and moved on with their lives.
+We retained our IP and built Airplanes.Live.
+```
 my code does support an api key but if you do setup a feeder for it as people who are using my addon should have already done....
 Not saying the people who used this addon were abusing it but the large companies etc 
 <img width="1084" height="426" alt="image" src="https://github.com/user-attachments/assets/52b7a837-6ed1-4fc5-a894-82c13f79b33f" />

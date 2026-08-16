@@ -3,8 +3,8 @@
 This Home Assistant add-on fetches live airplane tracking data from the [Airplanes.Live API](https://airplanes.live/api-guide/) and publishes it to an MQTT broker for Home Assistant integration.
 
 ## README
-API is gone for now....thanks people who just abused it 
-if you need access email contact@airplanes.live 
+free public API is gone....thanks people who just abused it 
+stuff will still work but you need to have a feeder to airplanes.live which is pretty damn reasonable to ask
 
 ```
 This is not an AI generated reply. This message is going out to everyone using the API.

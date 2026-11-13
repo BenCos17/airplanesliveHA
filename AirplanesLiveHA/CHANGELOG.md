@@ -1,3 +1,6 @@
+## 1.4.55
+- handle mqtt disconnects better and reconnect
+
 ## 1.4.54
 - fix aircraft count hopefully
 

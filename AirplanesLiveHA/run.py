@@ -1438,10 +1438,11 @@ class MQTTManager:
         """Send heartbeat to monitor connection health"""
         current_time = time.time()
         if current_time - self.last_heartbeat >= self.heartbeat_interval:
-            if self.connected:
+            if self.is_connected():
                 self._publish_status("online", "heartbeat")
                 self.last_heartbeat = current_time
             else:
+                self.connected = False
                 log("MQTT connection lost - attempting reconnection", "warning")
                 self.connect()
     

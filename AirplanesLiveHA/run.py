@@ -961,8 +961,8 @@ def publish_summary_data(mqtt_manager, aircraft_list, squawk_data: Optional[Dict
                 "closest_distance": closest_distance,
                 # Keep this numeric because the HA sensor uses unit_of_measurement=ft.
                 "highest": highest if highest_aircraft else None,
-                "highest_aircraft": highest_aircraft.get('flight', 'Unknown').strip() if highest_aircraft else "None",
-                "highest_display": f"{highest_aircraft.get('flight', 'Unknown').strip()} ({highest}ft)" if highest_aircraft else "None",
+                "highest_aircraft": str(highest_aircraft.get('flight') or 'Unknown').strip() if highest_aircraft else "None",
+                "highest_display": f"{str(highest_aircraft.get('flight') or 'Unknown').strip()} ({highest}ft)" if highest_aircraft else "None",
                 "fastest_ground": fastest_ground_kmh,
                 "fastest_air": fastest_air_kmh,
                 "aircraft_types": ", ".join(aircraft_types) if aircraft_types else "Unknown",
